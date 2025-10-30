@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Purchase {
+  id              String   @id @default(cuid())
+  sessionId       String
+  reference       String   @unique
+  status          String   // 'attempted', 'successful', 'failed'
+  paymentMethod   String   // 'etegram', 'paystack'
+  amount          Float
+  
+  // Attendee Information
+  attendeeEmail   String
+  attendeeName    String
+  attendeePhone   String?
+  attendeeCompany String?
+  attendeeJobTitle String?
+  
+  // Tickets purchased
+  tickets         Json     // Array of {ticketType, quantity, price}
+  
+  // Payment metadata
+  metadata        Json?    // Additional payment data
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime?
+  
+  @@index([sessionId])
+  @@index([attendeeEmail])
+  @@index([status])
+  @@index([createdAt])
+}

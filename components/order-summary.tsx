@@ -2,8 +2,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { EventMap } from "@/components/event-map";
-import { MapPin, Calendar, Ticket } from "lucide-react";
+import { MapPin, Calendar, Ticket, Trash2, Plus, Minus } from "lucide-react";
+import { useState } from "react";
 
 interface OrderSummaryProps {
   cart: Array<{
@@ -11,6 +13,8 @@ interface OrderSummaryProps {
     quantity: number;
     price: number;
   }>;
+  onUpdateQuantity?: (ticketType: string, quantity: number) => void;
+  onRemoveItem?: (ticketType: string) => void;
 }
 
 const TICKET_NAMES: Record<string, string> = {
@@ -21,7 +25,13 @@ const TICKET_NAMES: Record<string, string> = {
   premium: "Premium",
 };
 
-export function OrderSummary({ cart }: OrderSummaryProps) {
+export function OrderSummary({
+  cart,
+  onUpdateQuantity,
+  onRemoveItem,
+}: OrderSummaryProps) {
+  const [editMode, setEditMode] = useState(false);
+
   const subtotal = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
@@ -29,15 +39,39 @@ export function OrderSummary({ cart }: OrderSummaryProps) {
   const tax = Math.round(subtotal * 0.075);
   const total = subtotal + tax;
 
+  const handleQuantityChange = (ticketType: string, newQuantity: number) => {
+    if (newQuantity >= 0 && onUpdateQuantity) {
+      onUpdateQuantity(ticketType, newQuantity);
+    }
+  };
+
+  const handleRemoveItem = (ticketType: string) => {
+    if (onRemoveItem) {
+      onRemoveItem(ticketType);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Mobile: Compact Summary */}
-      <Card className="lg:sticky lg:top-8 border-orange-200">
+      <Card className="lg:sticky lg:top-8 border-primary/20">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base md:text-lg flex items-center gap-2">
-            <Ticket className="h-5 w-5 text-orange-600" />
-            Order Summary
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base md:text-lg flex items-center gap-2">
+              <Ticket className="h-5 w-5 text-primary" />
+              Order Summary
+            </CardTitle>
+            {cart.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditMode(!editMode)}
+                className="text-xs"
+              >
+                {editMode ? "Done" : "Edit"}
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {cart.length === 0 ? (
@@ -59,17 +93,77 @@ export function OrderSummary({ cart }: OrderSummaryProps) {
                     className="flex justify-between items-start text-sm border-b pb-3 last:border-0"
                   >
                     <div className="flex-1">
-                      <span className="font-semibold text-orange-600">
-                        {TICKET_NAMES[item.ticketType]}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {" "}
-                        × {item.quantity}
-                      </span>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <span className="font-semibold text-primary">
+                            {TICKET_NAMES[item.ticketType]}
+                          </span>
+                          {!editMode && (
+                            <span className="text-muted-foreground">
+                              {" "}
+                              × {item.quantity}
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-semibold">
+                          ₦{(item.price * item.quantity).toLocaleString()}
+                        </span>
+                      </div>
+
+                      {editMode && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className="flex items-center gap-1 border rounded-md">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={() =>
+                                handleQuantityChange(
+                                  item.ticketType,
+                                  item.quantity - 1
+                                )
+                              }
+                              disabled={item.quantity <= 1}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <Input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) =>
+                                handleQuantityChange(
+                                  item.ticketType,
+                                  parseInt(e.target.value) || 0
+                                )
+                              }
+                              className="h-7 w-12 text-center border-0 p-0 text-xs"
+                              min="1"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={() =>
+                                handleQuantityChange(
+                                  item.ticketType,
+                                  item.quantity + 1
+                                )
+                              }
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-destructive hover:text-destructive"
+                            onClick={() => handleRemoveItem(item.ticketType)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                    <span className="font-semibold">
-                      ₦{(item.price * item.quantity).toLocaleString()}
-                    </span>
                   </div>
                 ))}
               </div>
@@ -87,10 +181,10 @@ export function OrderSummary({ cart }: OrderSummaryProps) {
                 </div>
               </div>
 
-              <div className="border-t pt-3 bg-orange-50 dark:bg-orange-950/20 -mx-6 px-6 -mb-6 pb-6 rounded-b-lg">
+              <div className="border-t pt-3 bg-accent -mx-6 px-6 -mb-6 pb-6 rounded-b-lg">
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-base">Total</span>
-                  <span className="text-xl md:text-2xl font-bold text-orange-600">
+                  <span className="text-xl md:text-2xl font-bold text-primary">
                     ₦{total.toLocaleString()}
                   </span>
                 </div>
@@ -101,10 +195,10 @@ export function OrderSummary({ cart }: OrderSummaryProps) {
       </Card>
 
       {/* Event Details Card */}
-      <Card className="border-orange-200 hidden lg:block">
+      <Card className="border-primary/20 hidden lg:block">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-orange-600" />
+            <Calendar className="h-5 w-5 text-primary" />
             Event Details
           </CardTitle>
         </CardHeader>
@@ -123,7 +217,7 @@ export function OrderSummary({ cart }: OrderSummaryProps) {
           </div>
           <Button
             variant="outline"
-            className="w-full mt-3 border-orange-600 text-orange-600 hover:bg-orange-50"
+            className="w-full mt-3 border-primary text-primary hover:bg-accent"
             onClick={() =>
               window.open(
                 "https://maps.google.com/?q=Ceedapeg+Hotels+Uyo",
@@ -140,10 +234,8 @@ export function OrderSummary({ cart }: OrderSummaryProps) {
       {/* Map */}
       <div className="hidden lg:block">
         <EventMap
-          latitude={4.9465}
-          longitude={8.6753}
           eventName="IBOM Tech Week 2025"
-          eventAddress="Ceedapeg Hotels, Uyo"
+          eventAddress="Ceedapeg Hotels, Chief Odiong Street, Uyo, Nigeria"
         />
       </div>
     </div>

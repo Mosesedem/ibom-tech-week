@@ -1,4 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 interface PaymentRequest {
   sessionId: string;
@@ -7,9 +8,12 @@ interface PaymentRequest {
   attendeeEmail: string;
   attendeeName: string;
   attendeePhone?: string;
+  attendeeCompany?: string;
+  attendeeJobTitle?: string;
   tickets: Array<{
     ticketType: string;
     quantity: number;
+    price?: number;
   }>;
 }
 
@@ -55,6 +59,34 @@ export async function POST(request: NextRequest) {
     // Generate unique reference
     const reference = generateReference(body.method);
 
+    // Save attempted purchase to database
+    try {
+      await prisma.purchase.create({
+        data: {
+          sessionId: body.sessionId,
+          reference,
+          status: "attempted",
+          paymentMethod: body.method,
+          amount: body.amount,
+          attendeeEmail: body.attendeeEmail,
+          attendeeName: body.attendeeName,
+          attendeePhone: body.attendeePhone,
+          attendeeCompany: body.attendeeCompany,
+          attendeeJobTitle: body.attendeeJobTitle,
+          tickets: body.tickets,
+          metadata: {
+            userAgent: request.headers.get("user-agent"),
+            ip:
+              request.headers.get("x-forwarded-for") ||
+              request.headers.get("x-real-ip"),
+          },
+        },
+      });
+    } catch (dbError) {
+      console.error("[Payment] Database save error:", dbError);
+      // Continue with payment initialization even if DB save fails
+    }
+
     // Initialize payment based on method
     let paymentResult;
     if (body.method === "etegram") {
@@ -71,7 +103,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // In production, save to database
     console.log("[Payment] Initialized:", {
       sessionId: body.sessionId,
       method: body.method,

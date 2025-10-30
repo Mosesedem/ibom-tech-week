@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Card,
   CardContent,
@@ -17,20 +17,46 @@ interface EventMapProps {
 }
 
 export function EventMap({
-  latitude = 4.9465,
-  longitude = 8.6753,
+  latitude,
+  longitude,
   eventName = "IBOM Tech Week 2025",
-  eventAddress = "Ceedapeg Hotels, Uyo",
+  eventAddress = "Ceedapeg Hotels, Chief Odiong Street, Uyo, Nigeria",
 }: EventMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    latitude && longitude ? { lat: latitude, lng: longitude } : null
+  );
+  const [isLoading, setIsLoading] = useState(!coords);
+
+  // Geocode the address if coordinates not provided
+  useEffect(() => {
+    if (!coords && eventAddress) {
+      // Use the geocoding API route
+      fetch(`/api/maps/geocode?address=${encodeURIComponent(eventAddress)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.location) {
+            setCoords({ lat: data.location.lat, lng: data.location.lng });
+          } else {
+            // Fallback to default coordinates for Uyo
+            console.warn("Geocoding failed, using default coordinates");
+            setCoords({ lat: 5.0378, lng: 7.9136 }); // Uyo center
+          }
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error("Geocoding error:", error);
+          // Fallback to default coordinates
+          setCoords({ lat: 5.0378, lng: 7.9136 });
+          setIsLoading(false);
+        });
+    }
+  }, [coords, eventAddress]);
 
   useEffect(() => {
-    // Check if Google Maps API is loaded
-    if (!window.google) {
-      console.warn(
-        " Google Maps API not loaded. Add your API key to enable maps."
-      );
+    // Check if Google Maps API is loaded and we have coordinates
+    if (!window.google || !coords) {
       return;
     }
 
@@ -38,15 +64,15 @@ export function EventMap({
       try {
         map.current = new window.google.maps.Map(mapContainer.current, {
           zoom: 15,
-          center: { lat: latitude, lng: longitude },
+          center: coords,
           mapTypeControl: true,
           fullscreenControl: true,
           streetViewControl: true,
         });
 
         // Add marker for event location
-        new window.google.maps.Marker({
-          position: { lat: latitude, lng: longitude },
+        const marker = new window.google.maps.Marker({
+          position: coords,
           map: map.current,
           title: eventName,
           animation: window.google.maps.Animation.DROP,
@@ -62,12 +88,6 @@ export function EventMap({
           `,
         });
 
-        const marker = new window.google.maps.Marker({
-          position: { lat: latitude, lng: longitude },
-          map: map.current,
-          title: eventName,
-        });
-
         marker.addListener("click", () => {
           infoWindow.open(map.current, marker);
         });
@@ -75,20 +95,19 @@ export function EventMap({
         // Open info window by default
         infoWindow.open(map.current, marker);
       } catch (error) {
-        console.error("[v0] Error initializing map:", error);
+        console.error("Error initializing map:", error);
       }
+    } else if (map.current && coords) {
+      // Update map center if coordinates change
+      map.current.setCenter(coords);
     }
-
-    return () => {
-      // Cleanup if needed
-    };
-  }, [latitude, longitude, eventName, eventAddress]);
+  }, [coords, eventName, eventAddress]);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Event Location</CardTitle>
-        <CardDescription>Find us at Ceedapeg Hotels, Uyo</CardDescription>
+        <CardDescription>Find us at {eventAddress}</CardDescription>
       </CardHeader>
       <CardContent>
         <div
@@ -101,7 +120,14 @@ export function EventMap({
           }}
           className="bg-muted"
         >
-          {!window.google && (
+          {isLoading && (
+            <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
+              <div className="text-center">
+                <p className="font-semibold mb-2">Loading map...</p>
+              </div>
+            </div>
+          )}
+          {!window.google && !isLoading && (
             <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
               <div className="text-center">
                 <p className="font-semibold mb-2">Map not available</p>
@@ -117,14 +143,16 @@ export function EventMap({
             <p className="text-sm font-medium text-muted-foreground">Address</p>
             <p className="font-semibold">{eventAddress}</p>
           </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Coordinates
-            </p>
-            <p className="font-mono text-sm">
-              {latitude.toFixed(4)}, {longitude.toFixed(4)}
-            </p>
-          </div>
+          {coords && (
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Coordinates
+              </p>
+              <p className="font-mono text-sm">
+                {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
+              </p>
+            </div>
+          )}
           <a
             href={`https://www.google.com/maps/search/${encodeURIComponent(
               eventAddress

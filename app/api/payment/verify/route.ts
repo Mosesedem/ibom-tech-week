@@ -1,5 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 
 interface VerifyRequest {
   reference: string;
@@ -41,8 +42,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Log successful verification
+    // Update purchase status in database
     if (verificationResult.success) {
+      try {
+        await prisma.purchase.update({
+          where: { reference: body.reference },
+          data: {
+            status:
+              verificationResult.status === "success" ? "successful" : "failed",
+            completedAt: new Date(),
+            metadata: {
+              ...verificationResult.metadata,
+              paidAt: verificationResult.paidAt,
+              channel: verificationResult.channel,
+            },
+          },
+        });
+      } catch (dbError) {
+        console.error("[Payment] Database update error:", dbError);
+        // Continue even if DB update fails
+      }
+
       console.log("[Payment] Verified:", {
         reference: body.reference,
         method,
@@ -50,6 +70,19 @@ export async function POST(request: NextRequest) {
         status: verificationResult.status,
         timestamp: new Date().toISOString(),
       });
+    } else {
+      // Update as failed
+      try {
+        await prisma.purchase.update({
+          where: { reference: body.reference },
+          data: {
+            status: "failed",
+            completedAt: new Date(),
+          },
+        });
+      } catch (dbError) {
+        console.error("[Payment] Database update error:", dbError);
+      }
     }
 
     return NextResponse.json({
@@ -83,8 +116,40 @@ export async function GET(request: NextRequest) {
   try {
     const verificationResult = await verifyPaystackPayment(reference);
 
+    // Update database
+    if (verificationResult.success) {
+      try {
+        await prisma.purchase.update({
+          where: { reference },
+          data: {
+            status:
+              verificationResult.status === "success" ? "successful" : "failed",
+            completedAt: new Date(),
+            metadata: {
+              ...verificationResult.metadata,
+              paidAt: verificationResult.paidAt,
+              channel: verificationResult.channel,
+            },
+          },
+        });
+      } catch (dbError) {
+        console.error("[Payment] Database update error:", dbError);
+      }
+    } else {
+      try {
+        await prisma.purchase.update({
+          where: { reference },
+          data: {
+            status: "failed",
+            completedAt: new Date(),
+          },
+        });
+      } catch (dbError) {
+        console.error("[Payment] Database update error:", dbError);
+      }
+    }
+
     if (verificationResult.success && verificationResult.status === "success") {
-      // Redirect to success page with reference
       return redirect(`/?payment=success&reference=${reference}`);
     } else {
       return redirect(`/?payment=failed&reference=${reference}`);

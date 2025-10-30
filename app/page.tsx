@@ -10,12 +10,23 @@ import { OrderSummary } from "@/components/order-summary";
 import { SuccessModal } from "@/components/success-modal";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { RotateCcw, Sparkles } from "lucide-react";
+import Image from "next/image";
 
 export default function Home() {
   const [step, setStep] = useState<
     "tickets" | "attendee" | "payment" | "success"
   >("tickets");
-  const { cart, addToCart, updateAttendee, getSession } = useSession();
+  const {
+    cart,
+    addToCart,
+    updateCartQuantity,
+    removeFromCart,
+    updateAttendee,
+    resetSession,
+    getSession,
+  } = useSession();
   const [showSuccess, setShowSuccess] = useState(false);
   const searchParams = useSearchParams();
 
@@ -63,14 +74,112 @@ export default function Home() {
     }, 3000);
   };
 
+  const handleReset = () => {
+    if (
+      confirm(
+        "Are you sure you want to reset? This will clear your current session (successful purchases will be preserved)."
+      )
+    ) {
+      resetSession();
+      setStep("tickets");
+      toast.success("Session reset successfully");
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-orange-50/30 via-white to-orange-50/30 dark:from-background dark:via-background dark:to-background">
+    <main className="min-h-screen bg-gradient-to-br from-accent via-background to-accent">
       <Header />
 
       <div className="container mx-auto px-4 py-4 md:py-8 max-w-7xl">
+        {/* Hero Section */}
+        <div className="hidden lg:block mb-8">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary via-primary/90 to-secondary p-8 md:p-12 shadow-xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+              <div className="space-y-4 z-10 relative">
+                <div className="inline-flex items-center gap-2 bg-primary-foreground/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm text-primary-foreground">
+                  <Sparkles className="h-4 w-4" />
+                  <span>November 3-8, 2025</span>
+                </div>
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground leading-tight">
+                  Akwa Ibom Tech Week 2025
+                </h1>
+                <p className="text-lg md:text-xl text-primary-foreground/90 leading-relaxed">
+                  Catalyzing Digital Transformation for Innovation, Investment
+                  and Impact
+                </p>
+                <p className="text-base text-primary-foreground/80">
+                  Join tech leaders, innovators, and entrepreneurs for Africa's
+                  premier technology conference. Network with industry experts,
+                  attend workshops, and be part of the digital revolution
+                  shaping Akwa Ibom's future.
+                </p>
+                <div className="flex gap-4 pt-4">
+                  <Button
+                    size="lg"
+                    className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-semibold"
+                    onClick={() => {
+                      const element =
+                        document.getElementById("ticket-selection");
+                      element?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                  >
+                    Get Your Tickets Now
+                  </Button>
+                  {cart.length > 0 && (
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10"
+                      onClick={handleReset}
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Reset Session
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="relative h-64 md:h-96">
+                <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 to-transparent rounded-xl"></div>
+                <div className="relative h-full flex items-center justify-center">
+                  <div className="text-center text-primary-foreground/80 space-y-4">
+                    <div className="text-6xl md:text-8xl font-bold opacity-20">
+                      2025
+                    </div>
+                    <div className="text-2xl md:text-3xl font-semibold">
+                      Tech Week
+                    </div>
+                    <div className="text-lg">Uyo, Akwa Ibom</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/20 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary-foreground/10 rounded-full blur-3xl"></div>
+          </div>
+        </div>
+
+        {/* Mobile Reset Button */}
+        {cart.length > 0 && (
+          <div className="lg:hidden mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full border-primary text-primary"
+              onClick={handleReset}
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset Session
+            </Button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-2 order-2 lg:order-1">
+          <div
+            className="lg:col-span-2 order-2 lg:order-1"
+            id="ticket-selection"
+          >
             {step === "tickets" && (
               <TicketSelection onSelect={handleTicketSelect} />
             )}
@@ -90,7 +199,11 @@ export default function Home() {
 
           {/* Order Summary Sidebar */}
           <div className="lg:col-span-1 order-1 lg:order-2">
-            <OrderSummary cart={cart} />
+            <OrderSummary
+              cart={cart}
+              onUpdateQuantity={updateCartQuantity}
+              onRemoveItem={removeFromCart}
+            />
           </div>
         </div>
       </div>
