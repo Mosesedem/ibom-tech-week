@@ -64,13 +64,13 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-gradient-to-br from-orange-50/30 via-white to-orange-50/30 dark:from-background dark:via-background dark:to-background">
       <Header />
 
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="container mx-auto px-4 py-4 md:py-8 max-w-7xl">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 order-2 lg:order-1">
             {step === "tickets" && (
               <TicketSelection onSelect={handleTicketSelect} />
             )}
@@ -89,7 +89,7 @@ export default function Home() {
           </div>
 
           {/* Order Summary Sidebar */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 order-1 lg:order-2">
             <OrderSummary cart={cart} />
           </div>
         </div>
