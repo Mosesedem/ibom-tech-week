@@ -29,22 +29,22 @@ export const loadEtegramScript = (): Promise<void> => {
 /**
  * Load Paystack script dynamically
  */
-export const loadPaystackScript = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    // Check if already loaded
-    if (window.PaystackPop) {
-      resolve();
-      return;
-    }
+// export const loadPaystackScript = (): Promise<void> => {
+//   return new Promise((resolve, reject) => {
+//     // Check if already loaded
+//     if (window.PaystackPop) {
+//       resolve();
+//       return;
+//     }
 
-    const script = document.createElement("script");
-    script.src = "https://js.paystack.co/v1/inline.js";
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Failed to load Paystack script"));
-    document.body.appendChild(script);
-  });
-};
+//     const script = document.createElement("script");
+//     script.src = "https://js.paystack.co/v1/inline.js";
+//     script.async = true;
+//     script.onload = () => resolve();
+//     script.onerror = () => reject(new Error("Failed to load Paystack script"));
+//     document.body.appendChild(script);
+//   });
+// };
 
 /**
  * Format amount to Naira with proper formatting
