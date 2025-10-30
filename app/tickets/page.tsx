@@ -130,7 +130,7 @@ export default function TicketsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [pin, setPin] = useState<string>("");
   const [authError, setAuthError] = useState<string | null>(null);
-  const allowedPin = ["1234", "5678", "9012"]; // Hard-coded PIN for access
+  const allowedPin = ["7878", "5678", "9012"]; // Hard-coded PIN for access
 
   // URL derived values
   const page = parseInt(searchParams.get("page") || "1");
