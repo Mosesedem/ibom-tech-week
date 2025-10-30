@@ -209,10 +209,17 @@ export default function Home() {
           {/* Main Content */}
           <div className="lg:col-span-2 order-1" id="ticket-selection">
             {step === "tickets" && (
+              // <TicketSelection
+              //   onSelect={handleTicketSelect}
+              //   openSheet={ticketSheetOpen}
+              //   onSheetChange={setTicketSheetOpen}
+              // />
               <TicketSelection
                 onSelect={handleTicketSelect}
                 openSheet={ticketSheetOpen}
                 onSheetChange={setTicketSheetOpen}
+                cart={cart}
+                onProceedToCheckout={handleProceedToCheckout}
               />
             )}
             {step === "attendee" && (

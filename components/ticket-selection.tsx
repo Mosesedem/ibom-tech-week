@@ -17,14 +17,27 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Check, Calendar, MapPin, Users } from "lucide-react";
+import { Check, Calendar, MapPin, Users, ShoppingCart } from "lucide-react";
+
+// interface TicketSelectionProps {
+//   onSelect: (ticketType: string, quantity: number, price: number) => void;
+//   openSheet?: boolean;
+//   onSheetChange?: (open: boolean) => void;
+//   cart: Array<{ ticketType: string; quantity: number; price: number }>;
+//   onProceedToCheckout: () => void;
+// }
 
 interface TicketSelectionProps {
   onSelect: (ticketType: string, quantity: number, price: number) => void;
   openSheet?: boolean;
   onSheetChange?: (open: boolean) => void;
+  cart?: Array<{
+    ticketType: string;
+    quantity: number;
+    price: number;
+  }>;
+  onProceedToCheckout?: () => void;
 }
-
 const TICKET_TYPES = [
   {
     id: "regular",
@@ -205,6 +218,8 @@ const TICKET_TYPES = [
 export function TicketSelection({
   onSelect,
   openSheet,
+  cart,
+  onProceedToCheckout,
   onSheetChange,
 }: TicketSelectionProps) {
   const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
@@ -217,6 +232,14 @@ export function TicketSelection({
       setIsSheetOpen(openSheet);
     }
   }, [openSheet]);
+
+  // Sync selectedTicket with cart if cart has items but local state doesn't
+  useEffect(() => {
+    const first = cart?.[0];
+    if (first && !selectedTicket) {
+      setSelectedTicket(first.ticketType);
+    }
+  }, [cart, selectedTicket]);
 
   const handleSheetChange = (open: boolean) => {
     setIsSheetOpen(open);
@@ -233,6 +256,8 @@ export function TicketSelection({
       handleSheetChange(false);
     }
   };
+  const hasCartItems = (cart?.length ?? 0) > 0;
+  // const hasCartItems = cart?.length > 0;
 
   return (
     <div className="space-y-4">
@@ -264,111 +289,127 @@ export function TicketSelection({
           </div>
 
           <div className="pt-3 border-t">
-            <Sheet open={isSheetOpen} onOpenChange={handleSheetChange}>
-              <SheetTrigger asChild>
-                <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold text-base md:text-lg h-12 md:h-14">
-                  Buy Ticket - Get Upto 80% Off
-                </Button>
-              </SheetTrigger>
-              <SheetContent
-                side="bottom"
-                className="h-[90vh] sm:h-[85vh] sm:max-w-2xl sm:mx-auto overflow-y-auto p-6"
+            {hasCartItems ? (
+              <Button
+                onClick={onProceedToCheckout}
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold text-base md:text-lg h-12 md:h-14"
               >
-                <SheetHeader className="pb-4 border-b sticky top-0 bg-background z-10">
-                  <SheetTitle className="text-lg md:text-xl font-bold text-orange-600">
-                    Select Your Ticket Package
-                  </SheetTitle>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    All packages include 40% discount. Choose the one that fits
-                    your needs.
-                  </p>
-                </SheetHeader>
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Complete Payment
+              </Button>
+            ) : (
+              <Sheet open={isSheetOpen} onOpenChange={handleSheetChange}>
+                <SheetTrigger asChild>
+                  <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold text-base md:text-lg h-12 md:h-14">
+                    Buy Ticket - Get Upto 80% Off
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="bottom"
+                  className="h-[90vh] sm:h-[85vh] sm:max-w-2xl sm:mx-auto overflow-y-auto p-6"
+                >
+                  <SheetHeader className="pb-4 border-b sticky top-0 bg-background z-10">
+                    <SheetTitle className="text-lg md:text-xl font-bold text-orange-600">
+                      Select Your Ticket Package
+                    </SheetTitle>
+                    <p className="text-xs md:text-sm text-muted-foreground">
+                      All packages include 40% discount. Choose the one that
+                      fits your needs.
+                    </p>
+                  </SheetHeader>
 
-                <div className="space-y-3 py-4">
-                  {TICKET_TYPES.map((ticket) => (
-                    <Card
-                      key={ticket.id}
-                      className={`relative cursor-pointer transition-all hover:shadow-md ${
-                        selectedTicket === ticket.id
-                          ? "ring-2 ring-orange-600 border-orange-600"
-                          : "hover:border-orange-300"
-                      }`}
-                      onClick={() => handleSelectTicket(ticket.id)}
-                    >
-                      {ticket.isPopular && (
-                        <Badge className="absolute -top-2 right-4 bg-green-600 hover:bg-green-700 text-white">
-                          POPULAR
-                        </Badge>
-                      )}
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <CardTitle className="text-base md:text-lg font-bold text-orange-600">
-                              {ticket.name}
-                            </CardTitle>
-                            <p className="text-xs md:text-sm text-muted-foreground mt-1">
-                              {ticket.description}
-                            </p>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-2xl md:text-3xl font-bold text-orange-600">
-                            ₦{ticket.price.toLocaleString()}
-                          </span>
-                          <span className="text-sm text-muted-foreground line-through">
-                            ₦{ticket.originalPrice.toLocaleString()}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className="ml-auto text-green-600 border-green-600"
-                          >
-                            {ticket.discount}% OFF
+                  <div className="space-y-3 py-4">
+                    {TICKET_TYPES.map((ticket) => (
+                      <Card
+                        key={ticket.id}
+                        className={`relative cursor-pointer transition-all hover:shadow-md ${
+                          selectedTicket === ticket.id
+                            ? "ring-2 ring-orange-600 border-orange-600"
+                            : "hover:border-orange-300"
+                        }`}
+                        onClick={() => handleSelectTicket(ticket.id)}
+                      >
+                        {ticket.isPopular && (
+                          <Badge className="absolute -top-2 right-4 bg-green-600 hover:bg-green-700 text-white">
+                            POPULAR
                           </Badge>
-                        </div>
-
-                        {/* Features List */}
-                        <div className="space-y-2 pt-2">
-                          {ticket.features.slice(0, 3).map((feature, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-start gap-2 text-xs md:text-sm"
-                            >
-                              <Check className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                              <span className="text-muted-foreground">
-                                {feature}
-                              </span>
+                        )}
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <CardTitle className="text-base md:text-lg font-bold text-orange-600">
+                                {ticket.name}
+                              </CardTitle>
+                              <p className="text-xs md:text-sm text-muted-foreground mt-1">
+                                {ticket.description}
+                              </p>
                             </div>
-                          ))}
-                        </div>
-
-                        {/* Coverage Accordion */}
-                        <Accordion type="single" collapsible className="w-full">
-                          <AccordionItem value="features" className="border-0">
-                            <AccordionTrigger
-                              className="text-xs md:text-sm font-semibold text-orange-600 hover:no-underline py-2"
-                              onClick={(e) => e.stopPropagation()}
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-2xl md:text-3xl font-bold text-orange-600">
+                              ₦{ticket.price.toLocaleString()}
+                            </span>
+                            <span className="text-sm text-muted-foreground line-through">
+                              ₦{ticket.originalPrice.toLocaleString()}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className="ml-auto text-green-600 border-green-600"
                             >
-                              View All Features ({ticket.features.length})
-                            </AccordionTrigger>
+                              {ticket.discount}% OFF
+                            </Badge>
+                          </div>
 
-                            <AccordionContent className="space-y-2 pt-2">
-                              {ticket.features.map((feature, idx) => (
-                                <div
-                                  key={idx}
-                                  className="flex items-start gap-2 text-xs md:text-sm"
-                                >
-                                  <Check className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                                  <span className="text-muted-foreground">
-                                    {feature}
-                                  </span>
-                                </div>
-                              ))}
-                            </AccordionContent>
-                          </AccordionItem>
+                          {/* Features List */}
+                          <div className="space-y-2 pt-2">
+                            {ticket.features.slice(0, 3).map((feature, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-start gap-2 text-xs md:text-sm"
+                              >
+                                <Check className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                                <span className="text-muted-foreground">
+                                  {feature}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
 
-                          {/* <AccordionItem value="coverage" className="border-0">
+                          {/* Coverage Accordion */}
+                          <Accordion
+                            type="single"
+                            collapsible
+                            className="w-full"
+                          >
+                            <AccordionItem
+                              value="features"
+                              className="border-0"
+                            >
+                              <AccordionTrigger
+                                className="text-xs md:text-sm font-semibold text-orange-600 hover:no-underline py-2"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                View All Features ({ticket.features.length})
+                              </AccordionTrigger>
+
+                              <AccordionContent className="space-y-2 pt-2">
+                                {ticket.features.map((feature, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-start gap-2 text-xs md:text-sm"
+                                  >
+                                    <Check className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                                    <span className="text-muted-foreground">
+                                      {feature}
+                                    </span>
+                                  </div>
+                                ))}
+                              </AccordionContent>
+                            </AccordionItem>
+
+                            {/* <AccordionItem value="coverage" className="border-0">
                             <AccordionTrigger className="text-xs md:text-sm font-semibold text-orange-600 hover:no-underline py-2">
                               Coverage Details
                             </AccordionTrigger>
@@ -395,29 +436,30 @@ export function TicketSelection({
                               </Accordion>
                             </AccordionContent>
                           </AccordionItem> */}
-                        </Accordion>
+                          </Accordion>
 
-                        <Button
-                          className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold mt-3"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectTicket(ticket.id);
-                          }}
-                        >
-                          Get Ticket
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </SheetContent>
-            </Sheet>
+                          <Button
+                            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold mt-3"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectTicket(ticket.id);
+                            }}
+                          >
+                            Get Ticket
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            )}
           </div>
         </CardContent>
       </Card>
 
       {/* Selected Ticket Summary */}
-      {selectedTicket && !isSheetOpen && (
+      {/* {selectedTicket && !isSheetOpen && (
         <Card className="border-orange-200 bg-orange-50/50 dark:bg-orange-950/20">
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
@@ -447,7 +489,7 @@ export function TicketSelection({
             </div>
           </CardContent>
         </Card>
-      )}
+      )} */}
     </div>
   );
 }
