@@ -267,7 +267,7 @@ export function TicketSelection({
             <Sheet open={isSheetOpen} onOpenChange={handleSheetChange}>
               <SheetTrigger asChild>
                 <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold text-base md:text-lg h-12 md:h-14">
-                  Buy Ticket - Get 40% Off
+                  Buy Ticket - Get Upto 80% Off
                 </Button>
               </SheetTrigger>
               <SheetContent
