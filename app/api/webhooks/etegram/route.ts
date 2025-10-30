@@ -270,8 +270,8 @@ export async function POST(req: NextRequest) {
 
       // 2. Send email to Moniecheap admin
       await sendTicketEmail({
-        to: "mosesmarius81@gmail.com",
-        attendeeName: "Moniecheap Admin",
+        to: "ceo@etegramgroup.com",
+        attendeeName: "Emem Edem ",
         tickets: generatedTickets,
         totalAmount: purchase.amount,
         reference: reference,
@@ -281,8 +281,8 @@ export async function POST(req: NextRequest) {
 
       // 3. Send email to sales team
       await sendTicketEmail({
-        to: "moses@protonmedicare.com",
-        attendeeName: "Akwa Ibom Tech Week Sales Team",
+        to: "president@ibominnovation.org",
+        attendeeName: "Mr. President",
         tickets: generatedTickets,
         totalAmount: purchase.amount,
         reference: reference,
