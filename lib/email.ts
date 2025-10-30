@@ -192,13 +192,13 @@ function generateTicketEmailHtml(params: EmailParams): string {
               <div style="background-color: #F8F9FA; border-radius: 4px; padding: 20px;">
                 <h3 style="color: #FF6B35; margin: 0 0 15px 0; font-size: 18px;">Event Information</h3>
                 <p style="margin: 8px 0; color: #333; font-size: 14px;">
-                  <strong style="color: #FF6B35;">📅 Date:</strong> [Event Date]
+                  <strong style="color: #FF6B35;">📅 Date:</strong> Nov 3-8, 2025
                 </p>
                 <p style="margin: 8px 0; color: #333; font-size: 14px;">
-                  <strong style="color: #FF6B35;">⏰ Time:</strong> [Event Time]
+                  <strong style="color: #FF6B35;">⏰ Time:</strong> 10:00 AM 
                 </p>
                 <p style="margin: 8px 0; color: #333; font-size: 14px;">
-                  <strong style="color: #FF6B35;">📍 Venue:</strong> [Event Venue]
+                  <strong style="color: #FF6B35;">📍 Venue:</strong> Ceedapeg hotels, Chief Odiong Street, Uyo, Nigeria
                 </p>
               </div>
             </td>
