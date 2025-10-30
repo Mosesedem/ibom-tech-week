@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 interface CartItem {
   ticketType: string;
@@ -32,6 +32,8 @@ interface SessionData {
 }
 
 const SESSION_STORAGE_KEY = "ticket_booking_session";
+// Keep in sync with components/attendee-form.tsx
+const FORM_STORAGE_PREFIX = "attendee_form_state_";
 
 export function useSession() {
   const [sessionData, setSessionData] = useState<SessionData>(() => {
@@ -62,6 +64,51 @@ export function useSession() {
     }
   }, []);
 
+  // Ensure the initial session (and its sessionId) is persisted immediately
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const existing = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (!existing) {
+        localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionData));
+      }
+    } catch {
+      // ignore storage errors
+    }
+    // Run only on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debounced network sync to DB
+  const syncTimerRef = useRef<number | null>(null);
+  const syncToServer = useCallback(
+    (
+      data: SessionData,
+      extra?: Partial<{ status: string; lastStep: string }>
+    ) => {
+      if (typeof window === "undefined") return;
+      if (syncTimerRef.current) {
+        window.clearTimeout(syncTimerRef.current);
+      }
+      syncTimerRef.current = window.setTimeout(() => {
+        fetch("/api/session/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: data.sessionId,
+            cart: data.cart,
+            attendee: data.attendee,
+            payment: data.payment,
+            status: extra?.status,
+            lastStep: extra?.lastStep,
+          }),
+          cache: "no-store",
+        }).catch(() => {});
+      }, 500);
+    },
+    []
+  );
+
   const addToCart = useCallback(
     (ticketType: string, quantity: number, price: number) => {
       const newCart = [...sessionData.cart];
@@ -75,12 +122,14 @@ export function useSession() {
         newCart.push({ ticketType, quantity, price });
       }
 
-      updateSession({
+      const updated = {
         ...sessionData,
         cart: newCart,
-      });
+      };
+      updateSession(updated);
+      syncToServer(updated, { lastStep: "tickets", status: "in_progress" });
     },
-    [sessionData, updateSession]
+    [sessionData, updateSession, syncToServer]
   );
 
   const removeFromCart = useCallback(
@@ -88,12 +137,14 @@ export function useSession() {
       const newCart = sessionData.cart.filter(
         (item) => item.ticketType !== ticketType
       );
-      updateSession({
+      const updated = {
         ...sessionData,
         cart: newCart,
-      });
+      };
+      updateSession(updated);
+      syncToServer(updated, { lastStep: "tickets", status: "in_progress" });
     },
-    [sessionData, updateSession]
+    [sessionData, updateSession, syncToServer]
   );
 
   const updateCartQuantity = useCallback(
@@ -103,22 +154,26 @@ export function useSession() {
           ? { ...item, quantity: Math.max(0, quantity) }
           : item
       );
-      updateSession({
+      const updated = {
         ...sessionData,
         cart: newCart.filter((item) => item.quantity > 0),
-      });
+      };
+      updateSession(updated);
+      syncToServer(updated, { lastStep: "tickets", status: "in_progress" });
     },
-    [sessionData, updateSession]
+    [sessionData, updateSession, syncToServer]
   );
 
   const updateAttendee = useCallback(
     (attendeeData: AttendeeData) => {
-      updateSession({
+      const updated = {
         ...sessionData,
         attendee: attendeeData,
-      });
+      };
+      updateSession(updated);
+      syncToServer(updated, { lastStep: "attendee", status: "in_progress" });
     },
-    [sessionData, updateSession]
+    [sessionData, updateSession, syncToServer]
   );
 
   const completePayment = useCallback(
@@ -126,7 +181,7 @@ export function useSession() {
       method: "etegram" | "paystack",
       paymentInfo: { transactionId: string; amount: number; method: string }
     ) => {
-      updateSession({
+      const updated = {
         ...sessionData,
         payment: {
           transactionId: paymentInfo.transactionId,
@@ -134,12 +189,37 @@ export function useSession() {
           method: method,
           timestamp: new Date().toISOString(),
         },
-      });
+      };
+      updateSession(updated);
+      syncToServer(updated, { lastStep: "success", status: "completed" });
     },
-    [sessionData, updateSession]
+    [sessionData, updateSession, syncToServer]
   );
 
   const clearSession = useCallback(() => {
+    // Clean up any persisted attendee form state
+    if (typeof window !== "undefined") {
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(FORM_STORAGE_PREFIX)) {
+            // Defer deletion to avoid index shifting issues
+            // Collect keys first
+          }
+        }
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(FORM_STORAGE_PREFIX)) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
+      } catch {
+        // no-op
+      }
+    }
+
     const clearedSession: SessionData = {
       cart: [],
       attendee: null,
@@ -151,6 +231,22 @@ export function useSession() {
 
   const resetSession = useCallback(() => {
     // Reset everything except successful purchases (which should be in database)
+    // Also clear any persisted attendee form state
+    if (typeof window !== "undefined") {
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(FORM_STORAGE_PREFIX)) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
+      } catch {
+        // ignore
+      }
+    }
+
     const resetData: SessionData = {
       cart: [],
       attendee: null,

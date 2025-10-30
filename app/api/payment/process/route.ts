@@ -87,21 +87,12 @@ export async function POST(request: NextRequest) {
       // Continue with payment initialization even if DB save fails
     }
 
-    // Initialize payment based on method
-    let paymentResult;
-    if (body.method === "etegram") {
-      paymentResult = await initializeEtegramPayment(body, reference);
-    } else if (body.method === "paystack") {
-      paymentResult = await initializePaystackPayment(body, reference);
-    } else {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid payment method",
-        },
-        { status: 400 }
-      );
-    }
+    // SDK-only: do not initialize with providers on the server.
+    // We only return the generated reference; client SDK will handle checkout.
+    const paymentResult = {
+      method: body.method,
+      amount: body.amount,
+    };
 
     console.log("[Payment] Initialized:", {
       sessionId: body.sessionId,
@@ -112,11 +103,7 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
 
-    return NextResponse.json({
-      success: true,
-      reference,
-      ...paymentResult,
-    });
+    return NextResponse.json({ success: true, reference, ...paymentResult });
   } catch (error) {
     console.error("[Payment] Initialization error:", error);
     return NextResponse.json(
@@ -132,82 +119,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function initializeEtegramPayment(
-  data: PaymentRequest,
-  reference: string
-) {
-  // Etegram uses client-side SDK, so we just return the necessary data
-  // The actual payment will be initiated on the client with etegram-pay
-  return {
-    method: "etegram",
-    amount: data.amount,
-    metadata: {
-      sessionId: data.sessionId,
-      attendeeEmail: data.attendeeEmail,
-      attendeeName: data.attendeeName,
-      tickets: data.tickets,
-      reference,
-    },
-  };
-}
-
-async function initializePaystackPayment(
-  data: PaymentRequest,
-  reference: string
-) {
-  try {
-    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
-
-    if (!paystackSecretKey) {
-      throw new Error("Paystack configuration missing");
-    }
-
-    // Initialize Paystack transaction
-    const response = await fetch(
-      "https://api.paystack.co/transaction/initialize",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${paystackSecretKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: data.attendeeEmail,
-          amount: data.amount * 100, // Convert to kobo
-          reference,
-          callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/verify`,
-          metadata: {
-            sessionId: data.sessionId,
-            attendeeName: data.attendeeName,
-            tickets: data.tickets,
-            custom_fields: [
-              {
-                display_name: "Attendee Name",
-                variable_name: "attendee_name",
-                value: data.attendeeName,
-              },
-            ],
-          },
-        }),
-      }
-    );
-
-    const result = await response.json();
-
-    if (!result.status || !result.data) {
-      throw new Error(
-        result.message || "Failed to initialize Paystack payment"
-      );
-    }
-
-    return {
-      method: "paystack",
-      authorization_url: result.data.authorization_url,
-      access_code: result.data.access_code,
-      amount: data.amount,
-    };
-  } catch (error) {
-    console.error("[Paystack] Initialization error:", error);
-    throw error;
-  }
-}
+// SDK-only mode: provider initialization helpers removed

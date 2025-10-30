@@ -44,6 +44,7 @@ export function OrderSummary({
   onProceedToCheckout,
 }: OrderSummaryProps) {
   const [editMode, setEditMode] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   const subtotal = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -53,15 +54,7 @@ export function OrderSummary({
   const total = subtotal + tax;
 
   const handleReset = () => {
-    if (
-      confirm(
-        "Are you sure you want to reset? This will clear your current session (successful purchases will be preserved)."
-      )
-    ) {
-      if (onReset) {
-        onReset();
-      }
-    }
+    setShowResetDialog(true);
   };
 
   const handleQuantityChange = (ticketType: string, newQuantity: number) => {
@@ -78,6 +71,42 @@ export function OrderSummary({
 
   return (
     <div className="space-y-4">
+      {/* Reset Confirmation Dialog */}
+      {showResetDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowResetDialog(false)}
+          />
+          <div className="relative z-10 w-[90%] max-w-md rounded-lg bg-white p-5 shadow-lg border">
+            <h3 className="text-base md:text-lg font-semibold mb-1">
+              Reset session?
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              This will clear your current cart and form progress saved for this
+              session on this device. Successful purchases, if any, are
+              preserved.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowResetDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  setShowResetDialog(false);
+                  onReset?.();
+                }}
+              >
+                Reset Now
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Mobile: Compact Summary */}
       <Card className="lg:sticky lg:top-8 border-primary/20">
         <CardHeader className="pb-3">

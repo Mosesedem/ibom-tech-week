@@ -116,6 +116,9 @@ importers:
       embla-carousel-react:
         specifier: 8.5.1
         version: 8.5.1(react@19.2.0)
+      etegram-pay:
+        specifier: ^1.1.5
+        version: 1.1.5
       input-otp:
         specifier: 1.4.1
         version: 1.4.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1419,6 +1422,9 @@ packages:
   escalade@3.2.0:
     resolution: {integrity: sha512-WUj2qlxaQtO4g6Pq5c29GTcWGDyd8itL8zTlipgECz3JesAiiOKotd8JU6otB3PACgG6xkJUyVhboMS+bje/jA==}
     engines: {node: '>=6'}
+
+  etegram-pay@1.1.5:
+    resolution: {integrity: sha512-/uSqSCSDITUa+mwQ8rknasfM3RsnXn+mTU2DEyIWRp99rVy99f8f8NsbVQJk6+oA2qluPw1skuEyPF9tyudLYQ==}
 
   eventemitter3@4.0.7:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
@@ -3027,6 +3033,8 @@ snapshots:
       tapable: 2.3.0
 
   escalade@3.2.0: {}
+
+  etegram-pay@1.1.5: {}
 
   eventemitter3@4.0.7: {}
 

@@ -272,7 +272,7 @@ export function TicketSelection({
               </SheetTrigger>
               <SheetContent
                 side="bottom"
-                className="h-[90vh] sm:h-[85vh] sm:max-w-2xl sm:mx-auto overflow-y-auto"
+                className="h-[90vh] sm:h-[85vh] sm:max-w-2xl sm:mx-auto overflow-y-auto p-6"
               >
                 <SheetHeader className="pb-4 border-b sticky top-0 bg-background z-10">
                   <SheetTitle className="text-lg md:text-xl font-bold text-orange-600">

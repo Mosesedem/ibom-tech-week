@@ -89,14 +89,33 @@ export default function Home() {
     setStep("attendee");
   };
 
+  // Sync high-level step and cart to DB for status tracking
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const controller = new AbortController();
+    fetch("/api/session/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: getSession().sessionId,
+        cart,
+        lastStep: step,
+        status: step === "success" ? "completed" : "in_progress",
+      }),
+      signal: controller.signal,
+      cache: "no-store",
+    }).catch(() => {});
+    return () => controller.abort();
+  }, [step, cart, getSession]);
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-accent via-background to-accent">
+    <main className="min-h-screen bg-linear-to-br from-accent via-background to-accent">
       <Header />
 
       <div className="container mx-auto px-4 py-4 md:py-8 max-w-7xl">
         {/* Hero Section */}
         <div className="hidden lg:block mb-8">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary via-primary/90 to-secondary p-8 md:p-12 shadow-xl">
+          <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-primary via-primary/90 to-secondary p-8 md:p-12 shadow-xl">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
               <div className="space-y-4 z-10 relative">
                 <div className="inline-flex items-center gap-2 bg-primary-foreground/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm text-primary-foreground">
@@ -135,7 +154,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="relative h-64 md:h-96">
-                <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 to-transparent rounded-xl"></div>
+                <div className="absolute inset-0 bg-linear-to-br from-secondary/20 to-transparent rounded-xl"></div>
                 <div className="relative h-full flex items-center justify-center">
                   <div className="text-center text-primary-foreground/80 space-y-4">
                     <div className="text-6xl md:text-8xl font-bold opacity-20">

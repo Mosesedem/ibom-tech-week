@@ -25,12 +25,25 @@ interface PaymentOptionsProps {
 }
 
 export function PaymentOptions({ onSuccess, onBack }: PaymentOptionsProps) {
+  // Get cart from session to compute total
+  const { cart } = require("@/hooks/use-session").useSession();
+  const subtotal = cart.reduce(
+    (sum: number, item: any) => sum + item.price * item.quantity,
+    0
+  );
+  const tax = Math.round(subtotal * 0.075);
+  const total = subtotal + tax;
+
   const [selectedPayment, setSelectedPayment] = useState<
     "etegram" | "paystack" | null
   >(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
+  // Disable paystack if total > 499999
+  const paystackDisabled = total > 499999;
+
   const handlePaymentSelect = (method: "etegram" | "paystack") => {
+    if (method === "paystack" && paystackDisabled) return;
     setSelectedPayment(method);
     setIsSheetOpen(true);
   };
@@ -67,8 +80,9 @@ export function PaymentOptions({ onSuccess, onBack }: PaymentOptionsProps) {
                 selectedPayment === "paystack"
                   ? "ring-2 ring-orange-600 border-orange-600 bg-orange-50 dark:bg-orange-950/20"
                   : "hover:border-orange-300"
-              }`}
+              } ${paystackDisabled ? "opacity-50 pointer-events-none" : ""}`}
               onClick={() => handlePaymentSelect("paystack")}
+              aria-disabled={paystackDisabled}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
@@ -91,6 +105,11 @@ export function PaymentOptions({ onSuccess, onBack }: PaymentOptionsProps) {
               <CardContent className="pt-0">
                 <p className="text-xs md:text-sm text-muted-foreground">
                   Pay with card, USSD, bank transfer, or other methods
+                  {paystackDisabled && (
+                    <span className="block text-xs text-destructive font-semibold mt-1">
+                      Disabled for payments above ₦499,999. Use Etegram.
+                    </span>
+                  )}
                 </p>
                 <div className="flex flex-wrap gap-1 mt-2">
                   <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 rounded">

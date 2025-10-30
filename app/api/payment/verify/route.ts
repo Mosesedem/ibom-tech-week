@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 interface VerifyRequest {
   reference: string;
   method?: "etegram" | "paystack";
+  accessCode?: string;
+  projectId?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -29,7 +31,11 @@ export async function POST(request: NextRequest) {
     // Verify payment based on method
     let verificationResult;
     if (method === "etegram") {
-      verificationResult = await verifyEtegramPayment(body.reference);
+      verificationResult = await verifyEtegramPayment(
+        body.reference,
+        body.accessCode,
+        body.projectId
+      );
     } else if (method === "paystack") {
       verificationResult = await verifyPaystackPayment(body.reference);
     } else {
@@ -160,36 +166,54 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function verifyEtegramPayment(reference: string) {
+async function verifyEtegramPayment(
+  reference: string,
+  accessCode?: string,
+  projectId?: string
+) {
   try {
-    const etegramSecretKey = process.env.ETEGRAM_SECRET_KEY;
-
-    if (!etegramSecretKey) {
-      throw new Error("Etegram configuration missing");
+    // Prefer official verify endpoint using projectId and accessCode
+    const proj = projectId || process.env.ETEGRAM_PROJECT_ID || "";
+    if (accessCode && proj) {
+      const url = `https://api-checkout.etegram.com/api/transaction/verify-payment/${proj}/${accessCode}`;
+      const response = await fetch(url, { method: "PATCH", cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.message || "Etegram verification failed");
+      }
+      return {
+        success: result?.status === true || result?.status === "success",
+        status: result?.data?.status || (result?.status ? "success" : "failed"),
+        amount: Number(result?.data?.amount) || 0,
+        reference: result?.data?.reference || reference,
+        paidAt: result?.data?.paid_at,
+        channel: result?.data?.channel,
+        metadata: result?.data?.metadata,
+      };
     }
 
-    // Verify with Etegram API
+    // Fallback: old endpoint by reference (may be deprecated)
+    const fallbackKey = process.env.ETEGRAM_SECRET_KEY;
+    if (!fallbackKey) throw new Error("Etegram configuration missing");
     const response = await fetch(
       `https://api.etegram.com/api/verify/${reference}`,
       {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${etegramSecretKey}`,
+          Authorization: `Bearer ${fallbackKey}`,
           "Content-Type": "application/json",
         },
+        cache: "no-store",
       }
     );
-
     const result = await response.json();
-
     if (!response.ok) {
-      throw new Error(result.message || "Etegram verification failed");
+      throw new Error(result?.message || "Etegram verification failed");
     }
-
     return {
-      success: result.status === "success",
+      success: result.status === "success" || result.status === true,
       status: result.status,
-      amount: result.amount / 100, // Convert from kobo to naira
+      amount: Number(result.amount) / 100 || 0,
       reference: result.reference,
       paidAt: result.paid_at,
       channel: result.channel,

@@ -88,31 +88,19 @@ export function PaystackPayment({ onSuccess, onBack }: PaystackPaymentProps) {
       if (!result.success) {
         throw new Error(result.error || "Failed to initialize payment");
       }
+      const reference = result.reference as string;
 
-      const reference = result.reference;
+      // SDK-only: require inline SDK and public key
+      const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "";
+      if (!window.PaystackPop || !publicKey) {
+        throw new Error(
+          "Paystack SDK not available. Check NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY and network."
+        );
+      }
 
-      // Initialize Paystack Popup
-      const handler = window.PaystackPop!.setup({
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
-        email: attendee.email,
-        amount: total * 100, // Convert to kobo
-        ref: reference,
-        metadata: {
-          sessionId,
-          custom_fields: [
-            {
-              display_name: "Attendee Name",
-              variable_name: "attendee_name",
-              value: `${attendee.firstName} ${attendee.lastName}`,
-            },
-            {
-              display_name: "Phone Number",
-              variable_name: "phone",
-              value: attendee.phone,
-            },
-          ],
-        },
-        callback: async (response: any) => {
+      // Define callback as a normal function (SDKs sometimes reject async fns)
+      function paymentCallback(response: any) {
+        (async () => {
           try {
             // Verify payment
             const verifyResponse = await fetch("/api/payment/verify", {
@@ -150,11 +138,38 @@ export function PaystackPayment({ onSuccess, onBack }: PaystackPaymentProps) {
           } finally {
             setIsProcessing(false);
           }
+        })();
+      }
+
+      // Define onClose function explicitly
+      const paymentOnClose = function () {
+        toast.info("Payment cancelled");
+        setIsProcessing(false);
+      };
+
+      // Initialize Paystack Popup
+      const handler = window.PaystackPop!.setup({
+        key: publicKey,
+        email: attendee.email,
+        amount: total * 100, // Convert to kobo
+        ref: reference,
+        metadata: {
+          sessionId,
+          custom_fields: [
+            {
+              display_name: "Attendee Name",
+              variable_name: "attendee_name",
+              value: `${attendee.firstName} ${attendee.lastName}`,
+            },
+            {
+              display_name: "Phone Number",
+              variable_name: "phone",
+              value: attendee.phone,
+            },
+          ],
         },
-        onClose: () => {
-          toast.info("Payment cancelled");
-          setIsProcessing(false);
-        },
+        callback: paymentCallback,
+        onClose: paymentOnClose,
       });
 
       handler.openIframe();

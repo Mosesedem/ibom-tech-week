@@ -8,6 +8,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model Purchase {
@@ -40,4 +41,27 @@ model Purchase {
   @@index([attendeeEmail])
   @@index([status])
   @@index([createdAt])
+}
+
+// Stores anonymous session-based draft/progress of the checkout form
+model SessionDraft {
+  id        String   @id @default(cuid())
+  sessionId String   @unique
+
+  // Snapshot of cart and attendee info tracked client-side
+  cart      Json
+  attendee  Json?
+  payment   Json?
+
+  // Optional high-level status and last step identifier
+  status    String?   // e.g., 'in_progress', 'completed'
+  lastStep  String?   // e.g., 'tickets' | 'attendee' | 'payment' | 'success'
+
+  // Arbitrary draft payload (e.g., attendee form progress)
+  draft     Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([updatedAt])
 }

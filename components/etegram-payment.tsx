@@ -9,41 +9,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
+import { payWithEtegram } from "etegram-pay";
 
 interface EtegramPaymentProps {
   onSuccess: () => void;
   onBack: () => void;
 }
 
-// Declare Etegram types
-declare global {
-  interface Window {
-    EtegramPay?: {
-      setup: (config: EtegramConfig) => {
-        openIframe: () => void;
-      };
-    };
-  }
-}
-
-interface EtegramConfig {
-  key: string;
-  email: string;
-  amount: number;
-  ref: string;
-  firstname?: string;
-  lastname?: string;
-  phone?: string;
-  onSuccess?: (response: any) => void;
-  onClose?: () => void;
-}
-
 export function EtegramPayment({ onSuccess, onBack }: EtegramPaymentProps) {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [transactionRef, setTransactionRef] = useState("");
+  // Removed manual verification input
   const { cart, attendee, completePayment, sessionId } = useSession();
 
   const subtotal = cart.reduce(
@@ -61,12 +38,17 @@ export function EtegramPayment({ onSuccess, onBack }: EtegramPaymentProps) {
 
     setIsProcessing(true);
     try {
+      const publicKey = process.env.NEXT_PUBLIC_ETEGRAM_PUBLIC_KEY || "";
+      if (!publicKey) {
+        throw new Error(
+          "Etegram public key not configured. Set NEXT_PUBLIC_ETEGRAM_PUBLIC_KEY."
+        );
+      }
+
       // Initialize payment with backend
       const response = await fetch("/api/payment/process", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
           method: "etegram",
@@ -82,121 +64,72 @@ export function EtegramPayment({ onSuccess, onBack }: EtegramPaymentProps) {
       });
 
       const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to initialize payment");
+      if (!result?.success) {
+        throw new Error(result?.error || "Failed to initialize payment");
       }
 
-      const reference = result.reference;
+      const reference: string = result.reference as string;
 
-      // Check if Etegram SDK is loaded
-      if (typeof window.EtegramPay === "undefined") {
-        toast.error("Payment system not loaded. Please refresh the page.");
-        setIsProcessing(false);
-        return;
-      }
+      // SDK-only mode: verify by reference on server after success
 
-      // Initialize Etegram payment
-      const handler = window.EtegramPay.setup({
-        key: process.env.NEXT_PUBLIC_ETEGRAM_PUBLIC_KEY || "",
-        email: attendee.email,
-        amount: total,
-        ref: reference,
-        firstname: attendee.firstName,
-        lastname: attendee.lastName,
-        phone: attendee.phone,
-        onSuccess: async (response: any) => {
-          try {
-            // Verify payment
-            const verifyResponse = await fetch("/api/payment/verify", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                reference: response.reference || reference,
-                method: "etegram",
-              }),
+      const handleSdkSuccess = async (sdkResponse: any) => {
+        try {
+          const verifyResponse = await fetch("/api/payment/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              reference: sdkResponse?.reference || reference,
+              method: "etegram",
+              // SDK-only: verify by reference (server will use secret key fallback)
+            }),
+          });
+          const verifyResult = await verifyResponse.json();
+
+          if (verifyResult.success && verifyResult.data.status === "success") {
+            completePayment("etegram", {
+              transactionId: sdkResponse?.reference || reference,
+              amount: total,
+              method: "etegram",
             });
-
-            const verifyResult = await verifyResponse.json();
-
-            if (
-              verifyResult.success &&
-              verifyResult.data.status === "success"
-            ) {
-              // Save payment to session
-              completePayment("etegram", {
-                transactionId: reference,
-                amount: total,
-                method: "etegram",
-              });
-
-              toast.success("Payment successful!");
-              onSuccess();
-            } else {
-              toast.error("Payment verification failed");
-            }
-          } catch (error) {
-            console.error("Payment verification error:", error);
-            toast.error("Failed to verify payment");
-          } finally {
-            setIsProcessing(false);
+            toast.success("Payment successful!");
+            onSuccess();
+          } else {
+            toast.error("Payment verification failed");
           }
-        },
-        onClose: () => {
-          toast.info("Payment cancelled");
+        } catch (err) {
+          console.error("Payment verification error:", err);
+          toast.error("Failed to verify payment");
+        } finally {
           setIsProcessing(false);
-        },
-      });
+        }
+      };
 
-      handler.openIframe();
+      const handleSdkClose = () => {
+        toast.info("Payment cancelled");
+        setIsProcessing(false);
+      };
+
+      // Open Etegram checkout modal via SDK
+      try {
+        // Some SDKs don't return a promise; avoid relying on await
+        (payWithEtegram as any)({
+          key: publicKey,
+          email: attendee.email,
+          amount: Number(total),
+          ref: reference,
+          firstname: attendee.firstName,
+          lastname: attendee.lastName,
+          phone: attendee.phone,
+          onSuccess: handleSdkSuccess,
+          onClose: handleSdkClose,
+        });
+      } catch (sdkErr) {
+        console.error("[Etegram] SDK error", sdkErr);
+        throw new Error("Failed to launch Etegram checkout. Please try again.");
+      }
     } catch (error) {
       console.error("Payment error:", error);
       toast.error(error instanceof Error ? error.message : "Payment failed");
-      setIsProcessing(false);
-    }
-  };
-
-  const handleManualVerification = async () => {
-    if (!transactionRef.trim()) {
-      toast.error("Please enter a transaction reference");
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const verifyResponse = await fetch("/api/payment/verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          reference: transactionRef,
-          method: "etegram",
-        }),
-      });
-
-      const verifyResult = await verifyResponse.json();
-
-      if (verifyResult.success && verifyResult.data.status === "success") {
-        completePayment("etegram", {
-          transactionId: transactionRef,
-          amount: total,
-          method: "etegram",
-        });
-
-        toast.success("Payment verified successfully!");
-        onSuccess();
-      } else {
-        toast.error(
-          "Payment verification failed. Please check your reference."
-        );
-      }
-    } catch (error) {
-      console.error("Verification error:", error);
-      toast.error("Failed to verify payment");
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -226,27 +159,7 @@ export function EtegramPayment({ onSuccess, onBack }: EtegramPaymentProps) {
           </div>
         </div>
 
-        <div className="border-t pt-4">
-          <p className="text-sm font-medium mb-2">Already made payment?</p>
-          <p className="text-xs text-muted-foreground mb-3">
-            Enter your transaction reference below to verify
-          </p>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Enter transaction reference"
-              value={transactionRef}
-              onChange={(e) => setTransactionRef(e.target.value)}
-              disabled={isProcessing}
-            />
-            <Button
-              onClick={handleManualVerification}
-              disabled={isProcessing || !transactionRef.trim()}
-              variant="outline"
-            >
-              Verify
-            </Button>
-          </div>
-        </div>
+        {/* Manual verification section removed per requirements */}
 
         <div className="flex gap-3">
           <Button variant="outline" onClick={onBack} disabled={isProcessing}>

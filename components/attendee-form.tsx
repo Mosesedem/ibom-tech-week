@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { User, Mail, Phone, Building2, Briefcase } from "lucide-react";
+import { useSession } from "@/hooks/use-session";
 
 interface AttendeeFormProps {
   onSubmit: (data: any) => void;
@@ -31,10 +32,15 @@ export function AttendeeForm({
 }: AttendeeFormProps) {
   // Calculate total number of attendees
   const totalAttendees = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const { sessionId } = useSession();
+  const STORAGE_KEY = useMemo(
+    () => `attendee_form_state_${sessionId}`,
+    [sessionId]
+  );
 
   const [currentAttendeeIndex, setCurrentAttendeeIndex] = useState(0);
   const [allAttendees, setAllAttendees] = useState<any[]>(
-    Array(totalAttendees)
+    Array(Math.max(totalAttendees, 1))
       .fill(null)
       .map(() => ({
         firstName: "",
@@ -54,6 +60,242 @@ export function AttendeeForm({
     company: "",
     jobTitle: "",
   });
+
+  // Track hydration precedence (local vs server) to avoid clobbering user input
+  const lastHydratedAtRef = useRef<number>(0);
+  const hasHydratedRef = useRef<boolean>(false);
+
+  // Load persisted form state if available
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as {
+        currentIndex: number;
+        allAttendees: any[];
+        formData: typeof formData;
+        totalAttendees: number;
+        version?: number;
+        updatedAt?: string;
+      };
+
+      // Reconcile saved attendees with current required total
+      let restored = saved.allAttendees || [];
+      if (totalAttendees > restored.length) {
+        // pad with blanks
+        const toAdd = totalAttendees - restored.length;
+        restored = restored.concat(
+          Array(toAdd)
+            .fill(null)
+            .map(() => ({
+              firstName: "",
+              lastName: "",
+              email: "",
+              phone: "",
+              company: "",
+              jobTitle: "",
+            }))
+        );
+      } else if (totalAttendees > 0 && totalAttendees < restored.length) {
+        restored = restored.slice(0, totalAttendees);
+      }
+
+      setAllAttendees(restored);
+      const idx = Math.min(
+        Math.max(0, saved.currentIndex ?? 0),
+        Math.max(0, totalAttendees - 1)
+      );
+      setCurrentAttendeeIndex(idx);
+      setFormData(
+        saved.formData ||
+          restored[idx] || {
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+            company: "",
+            jobTitle: "",
+          }
+      );
+      // Remember last hydration timestamp (prefer server if it's newer)
+      if (saved.updatedAt) {
+        const ts = Date.parse(saved.updatedAt);
+        if (!Number.isNaN(ts)) lastHydratedAtRef.current = ts;
+      }
+      hasHydratedRef.current = true;
+    } catch {
+      // ignore corrupted storage
+    }
+    // Re-evaluate when session or attendee count changes
+  }, [STORAGE_KEY, totalAttendees]);
+
+  // Persist form state on changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const payload = {
+        version: 1,
+        currentIndex: currentAttendeeIndex,
+        allAttendees,
+        formData,
+        totalAttendees,
+        updatedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // ignore write errors (e.g. storage full)
+    }
+  }, [
+    STORAGE_KEY,
+    currentAttendeeIndex,
+    allAttendees,
+    formData,
+    totalAttendees,
+  ]);
+
+  // Prefill from server if available and more recent than local/browser copy
+  useEffect(() => {
+    let aborted = false;
+    if (!sessionId) return;
+    // Fetch once per session/attendee-count change
+    const fetchDraft = async () => {
+      try {
+        const res = await fetch(
+          `/api/session/sync?sessionId=${encodeURIComponent(sessionId)}`,
+          {
+            method: "GET",
+            cache: "no-store",
+          }
+        );
+        if (!res.ok) return;
+        const json = await res.json();
+        const record = json?.data;
+        if (!record) return;
+        const serverUpdatedAt = record?.updatedAt
+          ? Date.parse(record.updatedAt)
+          : 0;
+        // If session marked completed, don't hydrate
+        if (
+          record?.status &&
+          String(record.status).toLowerCase() === "completed"
+        )
+          return;
+        const draft = record?.draft;
+        // If server has no draft, try attendee snapshot fallback (first attendee only)
+        if (!draft && record?.attendee) {
+          const a = record.attendee as any;
+          const first = {
+            firstName: a?.firstName || "",
+            lastName: a?.lastName || "",
+            email: a?.email || "",
+            phone: a?.phone || "",
+            company: a?.company || "",
+            jobTitle: a?.jobTitle || "",
+          };
+          if (aborted) return;
+          setAllAttendees([first]);
+          setCurrentAttendeeIndex(0);
+          setFormData(first);
+          lastHydratedAtRef.current = serverUpdatedAt || Date.now();
+          hasHydratedRef.current = true;
+          return;
+        }
+        // If server has no draft at all, nothing to hydrate
+        if (!draft) return;
+        // Only apply if it's newer than what we hydrated
+        if (serverUpdatedAt <= (lastHydratedAtRef.current || 0)) return;
+
+        // Draft shape expected: { version, currentIndex, totalAttendees, formData, allAttendees }
+        const saved = draft as {
+          currentIndex?: number;
+          allAttendees?: any[];
+          formData?: typeof formData;
+          totalAttendees?: number;
+        };
+
+        // Reconcile attendee list length with current cart
+        let restored: any[] = Array.isArray(saved.allAttendees)
+          ? [...saved.allAttendees]
+          : [];
+        if (totalAttendees > restored.length) {
+          const toAdd = totalAttendees - restored.length;
+          restored = restored.concat(
+            Array(toAdd)
+              .fill(null)
+              .map(() => ({
+                firstName: "",
+                lastName: "",
+                email: "",
+                phone: "",
+                company: "",
+                jobTitle: "",
+              }))
+          );
+        } else if (totalAttendees > 0 && totalAttendees < restored.length) {
+          restored = restored.slice(0, totalAttendees);
+        }
+
+        if (aborted) return;
+        setAllAttendees(restored);
+        const idx = Math.min(
+          Math.max(0, saved.currentIndex ?? 0),
+          Math.max(0, totalAttendees - 1)
+        );
+        setCurrentAttendeeIndex(idx);
+        setFormData(
+          saved.formData ||
+            restored[idx] || {
+              firstName: "",
+              lastName: "",
+              email: "",
+              phone: "",
+              company: "",
+              jobTitle: "",
+            }
+        );
+        lastHydratedAtRef.current = serverUpdatedAt || Date.now();
+        hasHydratedRef.current = true;
+      } catch {
+        // ignore network/server errors
+      }
+    };
+    fetchDraft();
+    return () => {
+      aborted = true;
+    };
+  }, [sessionId, totalAttendees]);
+
+  // Also sync draft progress to server (debounced)
+  const syncTimer = useRef<number | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!sessionId) return;
+    if (syncTimer.current) window.clearTimeout(syncTimer.current);
+    syncTimer.current = window.setTimeout(() => {
+      const draft = {
+        version: 1,
+        currentIndex: currentAttendeeIndex,
+        totalAttendees,
+        formData,
+        allAttendees,
+      };
+      fetch("/api/session/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          lastStep: "attendee",
+          status: "in_progress",
+          draft,
+        }),
+        cache: "no-store",
+      }).catch(() => {});
+    }, 700);
+    return () => {
+      if (syncTimer.current) window.clearTimeout(syncTimer.current);
+    };
+  }, [sessionId, currentAttendeeIndex, totalAttendees, formData, allAttendees]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -97,6 +339,20 @@ export function AttendeeForm({
       } else {
         // All attendees completed, submit all data
         setAllAttendees(updatedAttendees);
+        // Persist final set too
+        try {
+          const payload = {
+            version: 1,
+            currentIndex: currentAttendeeIndex,
+            allAttendees: updatedAttendees,
+            formData,
+            totalAttendees,
+            updatedAt: new Date().toISOString(),
+          };
+          if (typeof window !== "undefined") {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+          }
+        } catch {}
         onSubmit({
           attendees: updatedAttendees,
           primaryAttendee: updatedAttendees[0], // For backward compatibility
@@ -124,13 +380,84 @@ export function AttendeeForm({
     }
   };
 
+  // Reset dialog state and handler
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const doReset = async () => {
+    try {
+      // Clear browser cache
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+      // Clear server draft
+      if (sessionId) {
+        await fetch("/api/session/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId,
+            draft: null,
+            attendee: null,
+            lastStep: null,
+          }),
+        });
+      }
+    } catch {}
+    // Reset in-memory state
+    setAllAttendees(
+      Array(Math.max(totalAttendees, 1))
+        .fill(null)
+        .map(() => ({
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          company: "",
+          jobTitle: "",
+        }))
+    );
+    setCurrentAttendeeIndex(0);
+    setFormData({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      company: "",
+      jobTitle: "",
+    });
+    setErrors({});
+    lastHydratedAtRef.current = Date.now();
+    setShowResetDialog(false);
+  };
+
   return (
     <Card className="border-orange-200">
       <CardHeader>
         <CardTitle className="text-lg md:text-xl text-orange-600">
-          {totalAttendees > 1
-            ? `Attendee ${currentAttendeeIndex + 1} of ${totalAttendees}`
-            : "Attendee Information"}
+          {(() => {
+            if (totalAttendees <= 0) return "Attendee Information";
+            // Build expanded label list based on cart quantities
+            const expanded: string[] = [];
+            cart.forEach((item) => {
+              for (let i = 0; i < item.quantity; i++)
+                expanded.push(item.ticketType);
+            });
+            // Guard: if indexes mismatch, fallback
+            if (
+              currentAttendeeIndex < 0 ||
+              currentAttendeeIndex >= expanded.length
+            ) {
+              return "Attendee Information";
+            }
+            const typeAtIndex = expanded[currentAttendeeIndex] || "Attendee";
+            // Compute index within this type (1-based)
+            let countWithinType = 0;
+            for (let i = 0; i <= currentAttendeeIndex; i++) {
+              if (expanded[i] === typeAtIndex) countWithinType += 1;
+            }
+            // Format label like "Regular Attendee (1)"
+            const cleaned = String(typeAtIndex).trim();
+            return `${cleaned} Attendee (${countWithinType})`;
+          })()}
         </CardTitle>
         <CardDescription className="text-sm">
           {totalAttendees > 1
@@ -139,6 +466,38 @@ export function AttendeeForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* Reset dialog */}
+        {showResetDialog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setShowResetDialog(false)}
+            />
+            <div className="relative z-10 w-[90%] max-w-md rounded-lg bg-white p-5 shadow-lg border">
+              <h3 className="text-base md:text-lg font-semibold mb-1">
+                Reset attendee form?
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                This will clear all attendee details saved in your browser and
+                on this device for your session. You can’t undo this.
+              </p>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowResetDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={doReset}
+                >
+                  Reset Form
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             <div className="space-y-2">
@@ -276,6 +635,16 @@ export function AttendeeForm({
                 ? "Next Attendee"
                 : "Continue to Payment"}
             </Button>
+            <div className="sm:ml-auto w-full sm:w-auto order-3 flex justify-start sm:justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-xs text-muted-foreground hover:text-destructive"
+                onClick={() => setShowResetDialog(true)}
+              >
+                Reset Form
+              </Button>
+            </div>
           </div>
         </form>
       </CardContent>
