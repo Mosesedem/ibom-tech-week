@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
           where: { reference: body.reference },
           data: {
             status:
-              verificationResult.status === "success" ? "successful" : "failed",
+              verificationResult.status === "success" ? "verified" : "failed",
             completedAt: new Date(),
             metadata: {
               ...verificationResult.metadata,
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
           where: { reference },
           data: {
             status:
-              verificationResult.status === "success" ? "successful" : "failed",
+              verificationResult.status === "success" ? "verified" : "failed",
             completedAt: new Date(),
             metadata: {
               ...verificationResult.metadata,

@@ -9,6 +9,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@getbrevo/brevo": "^3.0.1",
     "@hookform/resolvers": "^3.10.0",
     "@prisma/client": "^6.18.0",
     "@radix-ui/react-accordion": "1.2.2",

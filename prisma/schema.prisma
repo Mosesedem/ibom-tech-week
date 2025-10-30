@@ -37,7 +37,49 @@ model Purchase {
   updatedAt       DateTime @updatedAt
   completedAt     DateTime?
   
+  // Relations
+  ticketRecords   Ticket[]
+  
   @@index([sessionId])
+  @@index([attendeeEmail])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Ticket {
+  id              String   @id @default(cuid())
+  ticketId        String   @unique  // e.g., AITW-LKJH123-ABC456
+  purchaseId      String
+  reference       String   // Payment reference
+  
+  // Ticket details
+  ticketType      String   // 'Regular', 'VIP', 'Student', etc.
+  status          String   @default("active") // 'active', 'used', 'cancelled'
+  
+  // Attendee information
+  attendeeName    String
+  attendeeEmail   String
+  attendeePhone   String?
+  attendeeCompany String?
+  attendeeJobTitle String?
+  
+  // Pricing
+  price           Float
+  
+  // Check-in tracking
+  checkedInAt     DateTime?
+  checkedInBy     String?  // Staff member who checked in
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  purchase        Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  
+  @@index([ticketId])
+  @@index([purchaseId])
+  @@index([reference])
   @@index([attendeeEmail])
   @@index([status])
   @@index([createdAt])

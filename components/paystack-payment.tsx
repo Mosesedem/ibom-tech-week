@@ -18,7 +18,6 @@ interface PaystackPaymentProps {
   onBack: () => void;
 }
 
-// Declare Paystack types
 declare global {
   interface Window {
     PaystackPop?: {
@@ -57,10 +56,46 @@ export function PaystackPayment({ onSuccess, onBack }: PaystackPaymentProps) {
       return;
     }
 
-    if (!paystackReady) {
-      toast.error("Payment system not ready. Please refresh the page.");
+    // Enhanced ready check
+    if (!paystackReady || !window.PaystackPop) {
+      toast.error(
+        "Payment system not ready. Please wait a moment and try again."
+      );
       return;
     }
+
+    // Validate public key with better error handling
+    const publicKey = (
+      process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KE ||
+      "pk_test_966417844239ce59118c53dcd6c184411116f88d"
+    ).trim();
+
+    if (!publicKey) {
+      console.error("NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY is not set");
+      toast.error(
+        "Payment system configuration error. Please contact support."
+      );
+      return;
+    }
+
+    if (
+      !publicKey.startsWith("pk_test_") &&
+      !publicKey.startsWith("pk_live_")
+    ) {
+      console.error(
+        "Invalid Paystack public key format. Must start with pk_test_ or pk_live_"
+      );
+      toast.error(
+        "Payment system configuration error. Please contact support."
+      );
+      return;
+    }
+
+    // Log for debugging (only first 15 chars for security)
+    console.log(
+      "Initializing payment with key:",
+      publicKey.substring(0, 15) + "..."
+    );
 
     setIsProcessing(true);
     try {
@@ -88,20 +123,21 @@ export function PaystackPayment({ onSuccess, onBack }: PaystackPaymentProps) {
       if (!result.success) {
         throw new Error(result.error || "Failed to initialize payment");
       }
-      const reference = result.reference as string;
 
-      // SDK-only: require inline SDK and public key
-      const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "";
-      if (!window.PaystackPop || !publicKey) {
-        throw new Error(
-          "Paystack SDK not available. Check NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY and network."
-        );
+      const reference = result.reference as string;
+      console.log("Payment reference generated:", reference);
+
+      // Double-check PaystackPop availability
+      if (!window.PaystackPop) {
+        throw new Error("Paystack SDK not loaded. Please refresh the page.");
       }
 
-      // Define callback as a normal function (SDKs sometimes reject async fns)
+      // Define callback as a normal function
       function paymentCallback(response: any) {
         (async () => {
           try {
+            console.log("Payment callback received:", response.reference);
+
             // Verify payment
             const verifyResponse = await fetch("/api/payment/verify", {
               method: "POST",
@@ -143,12 +179,13 @@ export function PaystackPayment({ onSuccess, onBack }: PaystackPaymentProps) {
 
       // Define onClose function explicitly
       const paymentOnClose = function () {
+        console.log("Payment modal closed by user");
         toast.info("Payment cancelled");
         setIsProcessing(false);
       };
 
-      // Initialize Paystack Popup
-      const handler = window.PaystackPop!.setup({
+      // Initialize Paystack Popup with validated config
+      const config: PaystackConfig = {
         key: publicKey,
         email: attendee.email,
         amount: total * 100, // Convert to kobo
@@ -170,8 +207,10 @@ export function PaystackPayment({ onSuccess, onBack }: PaystackPaymentProps) {
         },
         callback: paymentCallback,
         onClose: paymentOnClose,
-      });
+      };
 
+      console.log("Opening Paystack modal...");
+      const handler = window.PaystackPop.setup(config);
       handler.openIframe();
     } catch (error) {
       console.error("Payment error:", error);
@@ -185,9 +224,15 @@ export function PaystackPayment({ onSuccess, onBack }: PaystackPaymentProps) {
       <Script
         src="https://js.paystack.co/v1/inline.js"
         strategy="afterInteractive"
-        onLoad={() => setPaystackReady(true)}
-        onError={() => {
-          toast.error("Failed to load payment system");
+        onLoad={() => {
+          console.log("Paystack SDK loaded successfully");
+          setPaystackReady(true);
+        }}
+        onError={(e) => {
+          console.error("Failed to load Paystack SDK:", e);
+          toast.error(
+            "Failed to load payment system. Please refresh the page."
+          );
           setPaystackReady(false);
         }}
       />
@@ -239,7 +284,7 @@ export function PaystackPayment({ onSuccess, onBack }: PaystackPaymentProps) {
               {isProcessing
                 ? "Processing..."
                 : !paystackReady
-                ? "Loading..."
+                ? "Loading Payment System..."
                 : "Pay Now"}
             </Button>
           </div>
