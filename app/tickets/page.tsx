@@ -3,7 +3,14 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  Suspense,
+} from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 // --- Type Definitions (Retained 100%) ---
@@ -108,9 +115,8 @@ const TableSkeletonLoader = ({ rows = 5 }) => (
   </>
 );
 
-// --- Main Component ---
-
-export default function TicketsPage() {
+// --- Inner Component (Wrapped in Suspense to handle useSearchParams) ---
+function TicketsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -827,5 +833,14 @@ export default function TicketsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// --- Main Component (Wrapped in Suspense) ---
+export default function TicketsPage() {
+  return (
+    <Suspense fallback={<LoadingIndicator />}>
+      <TicketsContent />
+    </Suspense>
   );
 }
