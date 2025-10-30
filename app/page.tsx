@@ -1,36 +1,67 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Header } from "@/components/header"
-import { TicketSelection } from "@/components/ticket-selection"
-import { AttendeeForm } from "@/components/attendee-form"
-import { PaymentOptions } from "@/components/payment-options"
-import { OrderSummary } from "@/components/order-summary"
-import { SuccessModal } from "@/components/success-modal"
-import { useSession } from "@/hooks/use-session"
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Header } from "@/components/header";
+import { TicketSelection } from "@/components/ticket-selection";
+import { AttendeeForm } from "@/components/attendee-form";
+import { PaymentOptions } from "@/components/payment-options";
+import { OrderSummary } from "@/components/order-summary";
+import { SuccessModal } from "@/components/success-modal";
+import { useSession } from "@/hooks/use-session";
+import { toast } from "sonner";
 
 export default function Home() {
-  const [step, setStep] = useState<"tickets" | "attendee" | "payment" | "success">("tickets")
-  const { cart, addToCart, updateAttendee, getSession } = useSession()
-  const [showSuccess, setShowSuccess] = useState(false)
+  const [step, setStep] = useState<
+    "tickets" | "attendee" | "payment" | "success"
+  >("tickets");
+  const { cart, addToCart, updateAttendee, getSession } = useSession();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const searchParams = useSearchParams();
 
-  const handleTicketSelect = (ticketType: string, quantity: number, price: number) => {
-    addToCart(ticketType, quantity, price)
-    setStep("attendee")
-  }
+  // Handle payment callback from URL
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    const reference = searchParams.get("reference");
+
+    if (paymentStatus === "success" && reference) {
+      toast.success("Payment successful!");
+      setShowSuccess(true);
+      setTimeout(() => {
+        setStep("tickets");
+        setShowSuccess(false);
+        // Clear URL parameters
+        window.history.replaceState({}, "", "/");
+      }, 3000);
+    } else if (paymentStatus === "failed") {
+      toast.error("Payment failed. Please try again.");
+      setStep("payment");
+      // Clear URL parameters
+      window.history.replaceState({}, "", "/");
+    }
+  }, [searchParams]);
+
+  const handleTicketSelect = (
+    ticketType: string,
+    quantity: number,
+    price: number
+  ) => {
+    addToCart(ticketType, quantity, price);
+    setStep("attendee");
+  };
 
   const handleAttendeeSubmit = (data: any) => {
-    updateAttendee(data)
-    setStep("payment")
-  }
+    updateAttendee(data);
+    setStep("payment");
+  };
 
   const handlePaymentSuccess = () => {
-    setShowSuccess(true)
+    setShowSuccess(true);
     setTimeout(() => {
-      setStep("tickets")
-      setShowSuccess(false)
-    }, 3000)
-  }
+      setStep("tickets");
+      setShowSuccess(false);
+    }, 3000);
+  };
 
   return (
     <main className="min-h-screen bg-background">
@@ -40,10 +71,20 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
-            {step === "tickets" && <TicketSelection onSelect={handleTicketSelect} />}
-            {step === "attendee" && <AttendeeForm onSubmit={handleAttendeeSubmit} onBack={() => setStep("tickets")} />}
+            {step === "tickets" && (
+              <TicketSelection onSelect={handleTicketSelect} />
+            )}
+            {step === "attendee" && (
+              <AttendeeForm
+                onSubmit={handleAttendeeSubmit}
+                onBack={() => setStep("tickets")}
+              />
+            )}
             {step === "payment" && (
-              <PaymentOptions onSuccess={handlePaymentSuccess} onBack={() => setStep("attendee")} />
+              <PaymentOptions
+                onSuccess={handlePaymentSuccess}
+                onBack={() => setStep("attendee")}
+              />
             )}
           </div>
 
@@ -56,5 +97,5 @@ export default function Home() {
 
       {showSuccess && <SuccessModal />}
     </main>
-  )
+  );
 }
