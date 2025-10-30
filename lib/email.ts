@@ -252,7 +252,7 @@ export async function sendTicketEmail(params: EmailParams): Promise<void> {
   const sendSmtpEmail = new brevo.SendSmtpEmail();
   sendSmtpEmail.sender = {
     name: "Akwa Ibom Tech Week",
-    email: "noreply@moniecheap.com",
+    email: "noreply@etegram.com",
   };
   sendSmtpEmail.to = [{ email: to, name: params.attendeeName }];
   sendSmtpEmail.subject = isAdmin

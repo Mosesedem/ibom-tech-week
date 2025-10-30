@@ -19,7 +19,7 @@ function verifyEtegramSignature(body: string, signature?: string): boolean {
 
 // Generate unique ticket ID
 function generateTicketId(): string {
-  const prefix = "AITW";
+  const prefix = "AKTW-2025";
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 8).toUpperCase();
   return `${prefix}-${timestamp}-${random}`;
@@ -281,8 +281,8 @@ export async function POST(req: NextRequest) {
 
       // 3. Send email to sales team
       await sendTicketEmail({
-        to: "mosesmarius81@gmail.com",
-        attendeeName: "Sales Team",
+        to: "moses@protonmedicare.com",
+        attendeeName: "Akwa Ibom Tech Week Sales Team",
         tickets: generatedTickets,
         totalAmount: purchase.amount,
         reference: reference,
