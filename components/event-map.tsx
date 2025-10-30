@@ -28,6 +28,59 @@ export function EventMap({
     latitude && longitude ? { lat: latitude, lng: longitude } : null
   );
   const [isLoading, setIsLoading] = useState(!coords);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+
+  // Load Google Maps script
+  useEffect(() => {
+    if (window.google && window.google.maps) {
+      setMapLoaded(true);
+      setScriptLoaded(true);
+      return;
+    }
+
+    // Check if script is already being loaded
+    const existingScript = document.querySelector(
+      'script[src*="maps.googleapis.com"]'
+    );
+    if (existingScript) {
+      const checkInterval = setInterval(() => {
+        if (window.google && window.google.maps) {
+          setMapLoaded(true);
+          setScriptLoaded(true);
+          clearInterval(checkInterval);
+        }
+      }, 100);
+
+      setTimeout(() => clearInterval(checkInterval), 10000);
+      return () => clearInterval(checkInterval);
+    }
+
+    // Load the script
+    const script = document.createElement("script");
+    // Replace YOUR_API_KEY with your actual Google Maps API key
+    const apiKey =
+      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "YOUR_API_KEY";
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+
+    script.onload = () => {
+      setMapLoaded(true);
+      setScriptLoaded(true);
+    };
+
+    script.onerror = () => {
+      console.error("Failed to load Google Maps script");
+      setScriptLoaded(true);
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      // Cleanup is tricky with Google Maps, so we'll leave the script
+    };
+  }, []);
 
   // Geocode the address if coordinates not provided
   useEffect(() => {
@@ -56,7 +109,7 @@ export function EventMap({
 
   useEffect(() => {
     // Check if Google Maps API is loaded and we have coordinates
-    if (!window.google || !coords) {
+    if (!mapLoaded || !coords) {
       return;
     }
 
@@ -101,7 +154,7 @@ export function EventMap({
       // Update map center if coordinates change
       map.current.setCenter(coords);
     }
-  }, [coords, eventName, eventAddress]);
+  }, [coords, eventName, eventAddress, mapLoaded]);
 
   return (
     <Card>
@@ -120,14 +173,14 @@ export function EventMap({
           }}
           className="bg-muted"
         >
-          {isLoading && (
+          {(isLoading || !scriptLoaded) && (
             <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
               <div className="text-center">
                 <p className="font-semibold mb-2">Loading map...</p>
               </div>
             </div>
           )}
-          {!window.google && !isLoading && (
+          {!mapLoaded && scriptLoaded && !isLoading && (
             <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
               <div className="text-center">
                 <p className="font-semibold mb-2">Map not available</p>
@@ -143,7 +196,7 @@ export function EventMap({
             <p className="text-sm font-medium text-muted-foreground">Address</p>
             <p className="font-semibold">{eventAddress}</p>
           </div>
-          {coords && (
+          {/* {coords && (
             <div>
               <p className="text-sm font-medium text-muted-foreground">
                 Coordinates
@@ -152,7 +205,7 @@ export function EventMap({
                 {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
               </p>
             </div>
-          )}
+          )} */}
           <a
             href={`https://www.google.com/maps/search/${encodeURIComponent(
               eventAddress
