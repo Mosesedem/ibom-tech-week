@@ -4,7 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EventMap } from "@/components/event-map";
-import { MapPin, Calendar, Ticket, Trash2, Plus, Minus } from "lucide-react";
+import {
+  MapPin,
+  Calendar,
+  Ticket,
+  Trash2,
+  Plus,
+  Minus,
+  RotateCcw,
+  ShoppingCart,
+} from "lucide-react";
 import { useState } from "react";
 
 interface OrderSummaryProps {
@@ -15,6 +24,8 @@ interface OrderSummaryProps {
   }>;
   onUpdateQuantity?: (ticketType: string, quantity: number) => void;
   onRemoveItem?: (ticketType: string) => void;
+  onReset?: () => void;
+  onProceedToCheckout?: () => void;
 }
 
 const TICKET_NAMES: Record<string, string> = {
@@ -29,6 +40,8 @@ export function OrderSummary({
   cart,
   onUpdateQuantity,
   onRemoveItem,
+  onReset,
+  onProceedToCheckout,
 }: OrderSummaryProps) {
   const [editMode, setEditMode] = useState(false);
 
@@ -38,6 +51,18 @@ export function OrderSummary({
   );
   const tax = Math.round(subtotal * 0.075);
   const total = subtotal + tax;
+
+  const handleReset = () => {
+    if (
+      confirm(
+        "Are you sure you want to reset? This will clear your current session (successful purchases will be preserved)."
+      )
+    ) {
+      if (onReset) {
+        onReset();
+      }
+    }
+  };
 
   const handleQuantityChange = (ticketType: string, newQuantity: number) => {
     if (newQuantity >= 0 && onUpdateQuantity) {
@@ -181,12 +206,34 @@ export function OrderSummary({
                 </div>
               </div>
 
-              <div className="border-t pt-3 bg-accent -mx-6 px-6 -mb-6 pb-6 rounded-b-lg">
+              <div className="border-t pt-3 bg-accent -mx-6 px-6 pb-4 space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-base">Total</span>
                   <span className="text-xl md:text-2xl font-bold text-primary">
                     ₦{total.toLocaleString()}
                   </span>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-2">
+                  <Button
+                    onClick={onProceedToCheckout}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                    size="lg"
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Complete Payment
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-primary/30 text-primary hover:bg-accent"
+                    onClick={handleReset}
+                  >
+                    <RotateCcw className="h-3 w-3 mr-2" />
+                    Reset Session
+                  </Button>
                 </div>
               </div>
             </>

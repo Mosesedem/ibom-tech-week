@@ -17,9 +17,35 @@ import { User, Mail, Phone, Building2, Briefcase } from "lucide-react";
 interface AttendeeFormProps {
   onSubmit: (data: any) => void;
   onBack: () => void;
+  cart?: Array<{
+    ticketType: string;
+    quantity: number;
+    price: number;
+  }>;
 }
 
-export function AttendeeForm({ onSubmit, onBack }: AttendeeFormProps) {
+export function AttendeeForm({
+  onSubmit,
+  onBack,
+  cart = [],
+}: AttendeeFormProps) {
+  // Calculate total number of attendees
+  const totalAttendees = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const [currentAttendeeIndex, setCurrentAttendeeIndex] = useState(0);
+  const [allAttendees, setAllAttendees] = useState<any[]>(
+    Array(totalAttendees)
+      .fill(null)
+      .map(() => ({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        company: "",
+        jobTitle: "",
+      }))
+  );
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -47,9 +73,54 @@ export function AttendeeForm({ onSubmit, onBack }: AttendeeFormProps) {
     e.preventDefault();
     const newErrors = validateForm();
     if (Object.keys(newErrors).length === 0) {
-      onSubmit(formData);
+      // Save current attendee data
+      const updatedAttendees = [...allAttendees];
+      updatedAttendees[currentAttendeeIndex] = formData;
+
+      // Check if this is the last attendee
+      if (currentAttendeeIndex < totalAttendees - 1) {
+        // Save and move to next attendee
+        setAllAttendees(updatedAttendees);
+        setCurrentAttendeeIndex(currentAttendeeIndex + 1);
+        // Load next attendee's data or clear form
+        setFormData(
+          updatedAttendees[currentAttendeeIndex + 1] || {
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+            company: "",
+            jobTitle: "",
+          }
+        );
+        setErrors({});
+      } else {
+        // All attendees completed, submit all data
+        setAllAttendees(updatedAttendees);
+        onSubmit({
+          attendees: updatedAttendees,
+          primaryAttendee: updatedAttendees[0], // For backward compatibility
+          ...updatedAttendees[0], // Spread first attendee as main contact
+        });
+      }
     } else {
       setErrors(newErrors);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentAttendeeIndex > 0) {
+      // Save current data before going back
+      const updatedAttendees = [...allAttendees];
+      updatedAttendees[currentAttendeeIndex] = formData;
+      setAllAttendees(updatedAttendees);
+
+      // Go to previous attendee
+      setCurrentAttendeeIndex(currentAttendeeIndex - 1);
+      setFormData(updatedAttendees[currentAttendeeIndex - 1]);
+      setErrors({});
+    } else {
+      onBack();
     }
   };
 
@@ -57,10 +128,14 @@ export function AttendeeForm({ onSubmit, onBack }: AttendeeFormProps) {
     <Card className="border-orange-200">
       <CardHeader>
         <CardTitle className="text-lg md:text-xl text-orange-600">
-          Attendee Information
+          {totalAttendees > 1
+            ? `Attendee ${currentAttendeeIndex + 1} of ${totalAttendees}`
+            : "Attendee Information"}
         </CardTitle>
         <CardDescription className="text-sm">
-          Please provide your details to continue
+          {totalAttendees > 1
+            ? `Please provide details for attendee ${currentAttendeeIndex + 1}`
+            : "Please provide your details to continue"}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -187,17 +262,19 @@ export function AttendeeForm({ onSubmit, onBack }: AttendeeFormProps) {
           <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
             <Button
               variant="outline"
-              onClick={onBack}
+              onClick={handlePrevious}
               type="button"
               className="w-full sm:w-auto order-2 sm:order-1"
             >
-              Back
+              {currentAttendeeIndex > 0 ? "Previous Attendee" : "Back"}
             </Button>
             <Button
               type="submit"
               className="w-full sm:flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold order-1 sm:order-2"
             >
-              Continue to Payment
+              {currentAttendeeIndex < totalAttendees - 1
+                ? "Next Attendee"
+                : "Continue to Payment"}
             </Button>
           </div>
         </form>

@@ -28,6 +28,7 @@ export default function Home() {
     getSession,
   } = useSession();
   const [showSuccess, setShowSuccess] = useState(false);
+  const [ticketSheetOpen, setTicketSheetOpen] = useState(false);
   const searchParams = useSearchParams();
 
   // Handle payment callback from URL
@@ -75,15 +76,17 @@ export default function Home() {
   };
 
   const handleReset = () => {
-    if (
-      confirm(
-        "Are you sure you want to reset? This will clear your current session (successful purchases will be preserved)."
-      )
-    ) {
-      resetSession();
-      setStep("tickets");
-      toast.success("Session reset successfully");
+    resetSession();
+    setStep("tickets");
+    toast.success("Session reset successfully");
+  };
+
+  const handleProceedToCheckout = () => {
+    if (cart.length === 0) {
+      toast.error("Please select tickets first");
+      return;
     }
+    setStep("attendee");
   };
 
   return (
@@ -118,24 +121,17 @@ export default function Home() {
                     size="lg"
                     className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-semibold"
                     onClick={() => {
-                      const element =
-                        document.getElementById("ticket-selection");
-                      element?.scrollIntoView({ behavior: "smooth" });
+                      setTicketSheetOpen(true);
+                      // Also scroll to ticket section
+                      setTimeout(() => {
+                        const element =
+                          document.getElementById("ticket-selection");
+                        element?.scrollIntoView({ behavior: "smooth" });
+                      }, 100);
                     }}
                   >
                     Get Your Tickets Now
                   </Button>
-                  {cart.length > 0 && (
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10"
-                      onClick={handleReset}
-                    >
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      Reset Session
-                    </Button>
-                  )}
                 </div>
               </div>
               <div className="relative h-64 md:h-96">
@@ -159,20 +155,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Mobile Reset Button */}
-        {cart.length > 0 && (
-          <div className="lg:hidden mb-4">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full border-primary text-primary"
-              onClick={handleReset}
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Reset Session
-            </Button>
-          </div>
-        )}
+        {/* Mobile Reset Button - Removed, now in OrderSummary */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
           {/* Main Content */}
@@ -181,12 +164,17 @@ export default function Home() {
             id="ticket-selection"
           >
             {step === "tickets" && (
-              <TicketSelection onSelect={handleTicketSelect} />
+              <TicketSelection
+                onSelect={handleTicketSelect}
+                openSheet={ticketSheetOpen}
+                onSheetChange={setTicketSheetOpen}
+              />
             )}
             {step === "attendee" && (
               <AttendeeForm
                 onSubmit={handleAttendeeSubmit}
                 onBack={() => setStep("tickets")}
+                cart={cart}
               />
             )}
             {step === "payment" && (
@@ -203,6 +191,8 @@ export default function Home() {
               cart={cart}
               onUpdateQuantity={updateCartQuantity}
               onRemoveItem={removeFromCart}
+              onReset={handleReset}
+              onProceedToCheckout={handleProceedToCheckout}
             />
           </div>
         </div>

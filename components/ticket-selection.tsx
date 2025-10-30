@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -21,6 +21,8 @@ import { Check, Calendar, MapPin, Users } from "lucide-react";
 
 interface TicketSelectionProps {
   onSelect: (ticketType: string, quantity: number, price: number) => void;
+  openSheet?: boolean;
+  onSheetChange?: (open: boolean) => void;
 }
 
 const TICKET_TYPES = [
@@ -200,17 +202,35 @@ const TICKET_TYPES = [
   },
 ];
 
-export function TicketSelection({ onSelect }: TicketSelectionProps) {
+export function TicketSelection({
+  onSelect,
+  openSheet,
+  onSheetChange,
+}: TicketSelectionProps) {
   const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(openSheet || false);
+
+  // Sync external control with internal state
+  useEffect(() => {
+    if (openSheet !== undefined) {
+      setIsSheetOpen(openSheet);
+    }
+  }, [openSheet]);
+
+  const handleSheetChange = (open: boolean) => {
+    setIsSheetOpen(open);
+    if (onSheetChange) {
+      onSheetChange(open);
+    }
+  };
 
   const handleSelectTicket = (ticketId: string) => {
     setSelectedTicket(ticketId);
     const ticket = TICKET_TYPES.find((t) => t.id === ticketId);
     if (ticket) {
       onSelect(ticketId, quantity, ticket.price);
-      setIsSheetOpen(false);
+      handleSheetChange(false);
     }
   };
 
@@ -244,7 +264,7 @@ export function TicketSelection({ onSelect }: TicketSelectionProps) {
           </div>
 
           <div className="pt-3 border-t">
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <Sheet open={isSheetOpen} onOpenChange={handleSheetChange}>
               <SheetTrigger asChild>
                 <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold text-base md:text-lg h-12 md:h-14">
                   Buy Ticket - Get 40% Off
