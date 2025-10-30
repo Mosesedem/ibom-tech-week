@@ -15,6 +15,7 @@ interface PaymentRequest {
     quantity: number;
     price?: number;
   }>;
+  callbackUrl?: string;
 }
 
 // Generate unique payment reference
@@ -87,23 +88,90 @@ export async function POST(request: NextRequest) {
       // Continue with payment initialization even if DB save fails
     }
 
-    // SDK-only: do not initialize with providers on the server.
-    // We only return the generated reference; client SDK will handle checkout.
     const paymentResult = {
       method: body.method,
       amount: body.amount,
     };
 
-    console.log("[Payment] Initialized:", {
-      sessionId: body.sessionId,
-      method: body.method,
-      reference,
-      amount: body.amount,
-      email: body.attendeeEmail,
-      timestamp: new Date().toISOString(),
-    });
+    if (body.method === "paystack") {
+      const secretKey = process.env.PAYSTACK_SECRET_KEY;
+      if (!secretKey) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Payment system configuration error. Please contact support.",
+          },
+          { status: 500 }
+        );
+      }
 
-    return NextResponse.json({ success: true, reference, ...paymentResult });
+      const initBody = {
+        email: body.attendeeEmail,
+        amount: body.amount * 100,
+        reference,
+        callback_url: body.callbackUrl || `${request.nextUrl.origin}/verify`,
+        metadata: {
+          sessionId: body.sessionId,
+          attendee_name: body.attendeeName,
+          attendee_phone: body.attendeePhone,
+          tickets: body.tickets,
+        },
+      };
+
+      const initializeResponse = await fetch(
+        "https://api.paystack.co/transaction/initialize",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${secretKey}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(initBody),
+        }
+      );
+
+      if (!initializeResponse.ok) {
+        throw new Error(
+          `Paystack initialization failed: ${initializeResponse.status}`
+        );
+      }
+
+      const initData = await initializeResponse.json();
+
+      if (!initData.status) {
+        throw new Error(initData.message || "Payment initialization failed");
+      }
+
+      console.log("[Payment] Initialized:", {
+        sessionId: body.sessionId,
+        method: body.method,
+        reference,
+        amount: body.amount,
+        email: body.attendeeEmail,
+        timestamp: new Date().toISOString(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        reference,
+        authorization_url: initData.data.authorization_url,
+        ...paymentResult,
+      });
+    } else {
+      // Handle other methods (e.g., etegram) as before
+      console.log("[Payment] Initialized:", {
+        sessionId: body.sessionId,
+        method: body.method,
+        reference,
+        amount: body.amount,
+        email: body.attendeeEmail,
+        timestamp: new Date().toISOString(),
+      });
+
+      return NextResponse.json({ success: true, reference, ...paymentResult });
+    }
   } catch (error) {
     console.error("[Payment] Initialization error:", error);
     return NextResponse.json(
