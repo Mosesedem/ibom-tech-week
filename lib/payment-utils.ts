@@ -1,5 +1,11 @@
 // Utility functions for payment integration
 
+declare global {
+  interface Window {
+    EtegramPay?: any;
+  }
+}
+
 /**
  * Load Etegram script dynamically
  */

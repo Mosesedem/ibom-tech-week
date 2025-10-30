@@ -107,7 +107,7 @@ export function PaymentOptions({ onSuccess, onBack }: PaymentOptionsProps) {
                   Pay with card, USSD, bank transfer, or other methods
                   {paystackDisabled && (
                     <span className="block text-xs text-destructive font-semibold mt-1">
-                      Disabled for payments above ₦499,999. Use Etegram.
+                      Disabled for payments above ₦500,000. Use Etegram.
                     </span>
                   )}
                 </p>

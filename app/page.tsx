@@ -155,7 +155,15 @@ export default function Home() {
               </div>
               <div className="relative h-64 md:h-96">
                 <div className="absolute inset-0 bg-linear-to-br from-secondary/20 to-transparent rounded-xl"></div>
-                <div className="relative h-full flex items-center justify-center">
+                <Image
+                  src="/images/image.webp"
+                  alt="Akwa Ibom Tech Week 2025"
+                  layout="fill"
+                  // objectFit="cover"
+                  className="rounded-xl"
+                />
+
+                {/* <div className="relative h-full flex items-center justify-center">
                   <div className="text-center text-primary-foreground/80 space-y-4">
                     <div className="text-6xl md:text-8xl font-bold opacity-20">
                       2025
@@ -165,7 +173,7 @@ export default function Home() {
                     </div>
                     <div className="text-lg">Uyo, Akwa Ibom</div>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
             {/* Decorative elements */}

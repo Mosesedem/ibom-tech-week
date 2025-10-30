@@ -346,9 +346,13 @@ export function TicketSelection({
                         {/* Coverage Accordion */}
                         <Accordion type="single" collapsible className="w-full">
                           <AccordionItem value="features" className="border-0">
-                            <AccordionTrigger className="text-xs md:text-sm font-semibold text-orange-600 hover:no-underline py-2">
+                            <AccordionTrigger
+                              className="text-xs md:text-sm font-semibold text-orange-600 hover:no-underline py-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               View All Features ({ticket.features.length})
                             </AccordionTrigger>
+
                             <AccordionContent className="space-y-2 pt-2">
                               {ticket.features.map((feature, idx) => (
                                 <div
@@ -364,7 +368,7 @@ export function TicketSelection({
                             </AccordionContent>
                           </AccordionItem>
 
-                          <AccordionItem value="coverage" className="border-0">
+                          {/* <AccordionItem value="coverage" className="border-0">
                             <AccordionTrigger className="text-xs md:text-sm font-semibold text-orange-600 hover:no-underline py-2">
                               Coverage Details
                             </AccordionTrigger>
@@ -390,7 +394,7 @@ export function TicketSelection({
                                 ))}
                               </Accordion>
                             </AccordionContent>
-                          </AccordionItem>
+                          </AccordionItem> */}
                         </Accordion>
 
                         <Button
