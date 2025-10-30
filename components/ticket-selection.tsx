@@ -57,149 +57,149 @@ const TICKET_TYPES = [
       },
     ],
   },
-  {
-    id: "vip",
-    name: "VIP",
-    price: 60000,
-    originalPrice: 60000,
-    discount: 0,
-    description: "Reserved seat + Premium benefits",
-    isPopular: false,
-    features: [
-      "Access to all conference days",
-      "Reserved Seat",
-      "Lunch Buffet at CEEDAPEG Hotel on Conference Day 1 - 6th November, 2025 alone",
-      "Souvenir Goodie Bag",
-      "T&C Apply",
-    ],
-    coverage: [
-      {
-        title: "Premium Seating",
-        details:
-          "Reserved seating in the front rows for all sessions, ensuring the best view and acoustics.",
-      },
-      {
-        title: "Exclusive Lunch",
-        details:
-          "Complimentary lunch buffet at CEEDAPEG Hotel on November 6th, 2025. Network with speakers and VIP guests.",
-      },
-      {
-        title: "All Regular Benefits",
-        details:
-          "Includes all benefits from the Regular ticket plus exclusive VIP perks and priority access.",
-      },
-    ],
-  },
-  {
-    id: "vvip",
-    name: "VVIP",
-    price: 85000,
-    originalPrice: 85000,
-    discount: 0,
-    description: "Unrestricted access to all conferences",
-    isPopular: false,
-    features: [
-      "Unrestricted Access to All Conferences",
-      "Priority Reserved Seat",
-      "Lunch Buffet at CEEDAPEG Hotel on Conference Days - 6th & 7th November, 2025",
-      "Access to networking events",
-      "Souvenir Goodie Bag",
-      "T&C Apply",
-    ],
-    coverage: [
-      {
-        title: "VIP Plus Benefits",
-        details:
-          "Everything in VIP plus priority reserved seating, extended lunch access, and exclusive networking events.",
-      },
-      {
-        title: "Extended Dining",
-        details:
-          "Lunch buffet on both November 6th and 7th at CEEDAPEG Hotel with premium menu options.",
-      },
-      {
-        title: "Priority Access",
-        details:
-          "Skip lines and get priority entry to all sessions, workshops, and special events throughout the week.",
-      },
-    ],
-  },
-  {
-    id: "corporate",
-    name: "CORPORATE",
-    price: 250000,
-    originalPrice: 250000,
-    discount: 0,
-    description: "Unrestricted access + Branding",
-    isPopular: false,
-    features: [
-      "Unrestricted Access to All Conferences",
-      "Access to networking events",
-      "Access to Deal Room",
-      "Lunch Buffet at CEEDAPEG Hotel on Conference Days - 6th & 7th November, 2025",
-      "Priority Reserved Seat",
-      "Company logo on event programme",
-      "Share company branded items",
-      "Souvenir Goodie Bag",
-      "T&C Apply",
-    ],
-    coverage: [
-      {
-        title: "Brand Visibility",
-        details:
-          "Your company logo featured in the event programme and on digital displays. Distribute branded materials at the event.",
-      },
-      {
-        title: "Deal Room Access",
-        details:
-          "Exclusive access to the Deal Room for private meetings with investors, partners, and key stakeholders.",
-      },
-      {
-        title: "Complete Package",
-        details:
-          "All VVIP benefits plus corporate branding opportunities and networking in exclusive business lounges.",
-      },
-    ],
-  },
-  {
-    id: "premium",
-    name: "PREMIUM",
-    price: 850000,
-    originalPrice: 850000,
-    discount: 0,
-    description: "All-inclusive VIP experience",
-    isPopular: false,
-    features: [
-      "Unrestricted Access all AKTW Events",
-      "Access to networking events",
-      "Access to Deal Room",
-      "Lunch Buffet at CEEDAPEG Hotel on Conference Days - 6th & 7th November, 2025",
-      "Priority Reserved Seat",
-      "Company logo on event programme",
-      "Share company branded items",
-      "Souvenir Goodie Bag",
-      "Airport Pickup and Drop off",
-      "3 nights Diplomatic Suite Accommodation at CEEDAPEG Hotel (5th to 8th November, 2025)",
-      "T&C Apply",
-    ],
-    coverage: [
-      {
-        title: "Luxury Accommodation",
-        details:
-          "3 nights in a Diplomatic Suite at CEEDAPEG Hotel (November 5-8, 2025) with full amenities and room service.",
-      },
-      {
-        title: "VIP Transportation",
-        details:
-          "Complimentary airport pickup and drop-off service in luxury vehicles for seamless travel experience.",
-      },
-      {
-        title: "Ultimate Experience",
-        details:
-          "The complete AKTW2025 experience with all Corporate benefits plus accommodation and transportation.",
-      },
-    ],
-  },
+  // {
+  //   id: "vip",
+  //   name: "VIP",
+  //   price: 60000,
+  //   originalPrice: 60000,
+  //   discount: 0,
+  //   description: "Reserved seat + Premium benefits",
+  //   isPopular: false,
+  //   features: [
+  //     "Access to all conference days",
+  //     "Reserved Seat",
+  //     "Lunch Buffet at CEEDAPEG Hotel on Conference Day 1 - 6th November, 2025 alone",
+  //     "Souvenir Goodie Bag",
+  //     "T&C Apply",
+  //   ],
+  //   coverage: [
+  //     {
+  //       title: "Premium Seating",
+  //       details:
+  //         "Reserved seating in the front rows for all sessions, ensuring the best view and acoustics.",
+  //     },
+  //     {
+  //       title: "Exclusive Lunch",
+  //       details:
+  //         "Complimentary lunch buffet at CEEDAPEG Hotel on November 6th, 2025. Network with speakers and VIP guests.",
+  //     },
+  //     {
+  //       title: "All Regular Benefits",
+  //       details:
+  //         "Includes all benefits from the Regular ticket plus exclusive VIP perks and priority access.",
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "vvip",
+  //   name: "VVIP",
+  //   price: 85000,
+  //   originalPrice: 85000,
+  //   discount: 0,
+  //   description: "Unrestricted access to all conferences",
+  //   isPopular: false,
+  //   features: [
+  //     "Unrestricted Access to All Conferences",
+  //     "Priority Reserved Seat",
+  //     "Lunch Buffet at CEEDAPEG Hotel on Conference Days - 6th & 7th November, 2025",
+  //     "Access to networking events",
+  //     "Souvenir Goodie Bag",
+  //     "T&C Apply",
+  //   ],
+  //   coverage: [
+  //     {
+  //       title: "VIP Plus Benefits",
+  //       details:
+  //         "Everything in VIP plus priority reserved seating, extended lunch access, and exclusive networking events.",
+  //     },
+  //     {
+  //       title: "Extended Dining",
+  //       details:
+  //         "Lunch buffet on both November 6th and 7th at CEEDAPEG Hotel with premium menu options.",
+  //     },
+  //     {
+  //       title: "Priority Access",
+  //       details:
+  //         "Skip lines and get priority entry to all sessions, workshops, and special events throughout the week.",
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "corporate",
+  //   name: "CORPORATE",
+  //   price: 250000,
+  //   originalPrice: 250000,
+  //   discount: 0,
+  //   description: "Unrestricted access + Branding",
+  //   isPopular: false,
+  //   features: [
+  //     "Unrestricted Access to All Conferences",
+  //     "Access to networking events",
+  //     "Access to Deal Room",
+  //     "Lunch Buffet at CEEDAPEG Hotel on Conference Days - 6th & 7th November, 2025",
+  //     "Priority Reserved Seat",
+  //     "Company logo on event programme",
+  //     "Share company branded items",
+  //     "Souvenir Goodie Bag",
+  //     "T&C Apply",
+  //   ],
+  //   coverage: [
+  //     {
+  //       title: "Brand Visibility",
+  //       details:
+  //         "Your company logo featured in the event programme and on digital displays. Distribute branded materials at the event.",
+  //     },
+  //     {
+  //       title: "Deal Room Access",
+  //       details:
+  //         "Exclusive access to the Deal Room for private meetings with investors, partners, and key stakeholders.",
+  //     },
+  //     {
+  //       title: "Complete Package",
+  //       details:
+  //         "All VVIP benefits plus corporate branding opportunities and networking in exclusive business lounges.",
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "premium",
+  //   name: "PREMIUM",
+  //   price: 850000,
+  //   originalPrice: 850000,
+  //   discount: 0,
+  //   description: "All-inclusive VIP experience",
+  //   isPopular: false,
+  //   features: [
+  //     "Unrestricted Access all AKTW Events",
+  //     "Access to networking events",
+  //     "Access to Deal Room",
+  //     "Lunch Buffet at CEEDAPEG Hotel on Conference Days - 6th & 7th November, 2025",
+  //     "Priority Reserved Seat",
+  //     "Company logo on event programme",
+  //     "Share company branded items",
+  //     "Souvenir Goodie Bag",
+  //     "Airport Pickup and Drop off",
+  //     "3 nights Diplomatic Suite Accommodation at CEEDAPEG Hotel (5th to 8th November, 2025)",
+  //     "T&C Apply",
+  //   ],
+  //   coverage: [
+  //     {
+  //       title: "Luxury Accommodation",
+  //       details:
+  //         "3 nights in a Diplomatic Suite at CEEDAPEG Hotel (November 5-8, 2025) with full amenities and room service.",
+  //     },
+  //     {
+  //       title: "VIP Transportation",
+  //       details:
+  //         "Complimentary airport pickup and drop-off service in luxury vehicles for seamless travel experience.",
+  //     },
+  //     {
+  //       title: "Ultimate Experience",
+  //       details:
+  //         "The complete AKTW2025 experience with all Corporate benefits plus accommodation and transportation.",
+  //     },
+  //   ],
+  // },
 ];
 
 export function TicketSelection({

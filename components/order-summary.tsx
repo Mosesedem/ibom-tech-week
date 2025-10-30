@@ -96,7 +96,7 @@ export function OrderSummary({
                 Cancel
               </Button>
               <Button
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="bg-destructive text-white hover:bg-destructive/90"
                 onClick={() => {
                   setShowResetDialog(false);
                   onReset?.();
@@ -117,14 +117,25 @@ export function OrderSummary({
               Order Summary
             </CardTitle>
             {cart.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setEditMode(!editMode)}
-                className="text-xs"
-              >
-                {editMode ? "Done" : "Edit"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditMode(!editMode)}
+                  className="text-xs"
+                >
+                  {editMode ? "Done" : "Edit"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-destructive hover:text-destructive"
+                  onClick={handleReset}
+                >
+                  <RotateCcw className="h-2 w-2 mr-0" />
+                  Reset
+                </Button>
+              </div>
             )}
           </div>
         </CardHeader>
@@ -247,7 +258,7 @@ export function OrderSummary({
                 </div>
 
                 {/* Action Buttons */}
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Button
                     onClick={onProceedToCheckout}
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
@@ -255,9 +266,9 @@ export function OrderSummary({
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
                     Complete Payment
-                  </Button>
+                  </Button> */}
 
-                  <Button
+                {/* <Button
                     variant="outline"
                     size="sm"
                     className="w-full border-primary/30 text-primary hover:bg-accent"
@@ -265,8 +276,8 @@ export function OrderSummary({
                   >
                     <RotateCcw className="h-3 w-3 mr-2" />
                     Reset Session
-                  </Button>
-                </div>
+                  </Button> */}
+                {/* </div> */}
               </div>
             </>
           )}

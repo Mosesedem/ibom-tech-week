@@ -489,7 +489,7 @@ export function AttendeeForm({
                   Cancel
                 </Button>
                 <Button
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  className="bg-destructive text-white hover:bg-destructive/90"
                   onClick={doReset}
                 >
                   Reset Form
