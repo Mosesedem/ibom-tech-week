@@ -184,9 +184,6 @@ export function EventMap({
             <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
               <div className="text-center">
                 <p className="font-semibold mb-2">Map not available</p>
-                <p className="text-sm">
-                  Add your Google Maps API key to enable the map
-                </p>
               </div>
             </div>
           )}

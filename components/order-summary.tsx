@@ -50,7 +50,8 @@ export function OrderSummary({
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const tax = Math.round(subtotal * 0.075);
+  // const tax = Math.round(subtotal * 0.075);
+  const tax = 0;
   const total = subtotal + tax;
 
   const handleReset = () => {
@@ -231,7 +232,9 @@ export function OrderSummary({
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax (7.5%)</span>
-                  <span className="font-medium">₦{tax.toLocaleString()}</span>
+                  <span className="font-medium">
+                    ₦{tax.toLocaleString("en-NG")}
+                  </span>
                 </div>
               </div>
 

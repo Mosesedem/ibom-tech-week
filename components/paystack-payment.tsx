@@ -25,7 +25,8 @@ export function PaystackPayment({ onSuccess, onBack }: PaystackPaymentProps) {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const tax = Math.round(subtotal * 0.075);
+  // const tax = Math.round(subtotal * 0.075);
+  const tax = 0;
   const total = subtotal + tax;
 
   useEffect(() => {
@@ -152,7 +153,7 @@ export function PaystackPayment({ onSuccess, onBack }: PaystackPaymentProps) {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Tax (7.5%)</p>
-            <p className="font-semibold">₦{tax.toLocaleString()}</p>
+            <p className="font-semibold">₦{tax.toLocaleString("en-NG")}</p>
           </div>
           <div className="border-t pt-2 mt-2">
             <p className="text-sm text-muted-foreground">Total Amount</p>

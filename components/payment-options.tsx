@@ -31,7 +31,8 @@ export function PaymentOptions({ onSuccess, onBack }: PaymentOptionsProps) {
     (sum: number, item: any) => sum + item.price * item.quantity,
     0
   );
-  const tax = Math.round(subtotal * 0.075);
+  // const tax = Math.round(subtotal * 0.075);
+  const tax = 0;
   const total = subtotal + tax;
 
   const [selectedPayment, setSelectedPayment] = useState<
