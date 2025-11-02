@@ -285,3 +285,11 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+// Handle GET requests (for webhook verification if needed)
+export async function GET(req: NextRequest) {
+  return NextResponse.json({
+    message: "Paystack webhook endpoint is active",
+    timestamp: new Date().toISOString(),
+  });
+}
