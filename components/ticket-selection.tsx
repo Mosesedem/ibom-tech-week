@@ -284,7 +284,7 @@ export function TicketSelection({
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-orange-600" />
-              <span className="font-medium">Ceedapeg Hotels, Uyo</span>
+              <span className="font-medium">CEEDAPEG Hotels, Uyo</span>
             </div>
           </div>
 

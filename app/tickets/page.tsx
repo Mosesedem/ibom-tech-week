@@ -136,7 +136,7 @@ function TicketsContent() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [pin, setPin] = useState<string>("");
   const [authError, setAuthError] = useState<string | null>(null);
-  const allowedPin = ["7878", "5678", "9012"]; // Hard-coded PIN for access
+  const allowedPin = ["7878", "5678", "9012", "A123", "1759", "8080"]; // Hard-coded PIN for access
 
   // URL derived values
   const page = parseInt(searchParams.get("page") || "1");
@@ -386,7 +386,7 @@ function TicketsContent() {
             className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg"
             role="alert"
           >
-            <span className="font-medium">Fetch Error:</span> {error}
+            <span className="font-medium">An Error Occured:</span> {error}
           </div>
         )}
 

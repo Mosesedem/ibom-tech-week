@@ -1,57 +1,63 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server";
 
 interface EmailRequest {
-  attendeeEmail: string
-  attendeeName: string
-  transactionId: string
+  attendeeEmail: string;
+  attendeeName: string;
+  transactionId: string;
   tickets: Array<{
-    ticketType: string
-    quantity: number
-    price: number
-  }>
-  totalAmount: number
-  eventDate: string
-  eventLocation: string
+    ticketType: string;
+    quantity: number;
+    price: number;
+  }>;
+  totalAmount: number;
+  eventDate: string;
+  eventLocation: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body: EmailRequest = await request.json()
+    const body: EmailRequest = await request.json();
 
     // Validate email request
     if (!body.attendeeEmail || !body.attendeeName || !body.transactionId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
     // Send confirmation email
-    const emailResult = await sendConfirmationEmail(body)
+    const emailResult = await sendConfirmationEmail(body);
 
-    console.log("[v0] Confirmation email sent to:", body.attendeeEmail)
+    console.log("[v0] Confirmation email sent to:", body.attendeeEmail);
 
     return NextResponse.json({
       success: true,
       message: "Confirmation email sent successfully",
       emailId: emailResult.id,
-    })
+    });
   } catch (error) {
-    console.error("[v0] Email sending error:", error)
-    return NextResponse.json({ error: "Failed to send email" }, { status: 500 })
+    console.error("[v0] Email sending error:", error);
+    return NextResponse.json(
+      { error: "Failed to send email" },
+      { status: 500 }
+    );
   }
 }
 
 async function sendConfirmationEmail(data: EmailRequest) {
   // In production, use Resend, SendGrid, or similar service
   // For now, simulate email sending
-  const emailContent = generateEmailHTML(data)
+  const emailContent = generateEmailHTML(data);
 
-  console.log("[v0] Email content generated for:", data.attendeeEmail)
-  console.log("[v0] Transaction ID:", data.transactionId)
+  console.log("[v0] Email content generated for:", data.attendeeEmail);
+  console.log("[v0] Transaction ID:", data.transactionId);
 
   // Simulate API call
   return {
     id: `email_${Date.now()}`,
     status: "sent",
-  }
+  };
 }
 
 function generateEmailHTML(data: EmailRequest): string {
@@ -69,9 +75,9 @@ function generateEmailHTML(data: EmailRequest): string {
         ₦${(ticket.price * ticket.quantity).toLocaleString()}
       </td>
     </tr>
-  `,
+  `
     )
-    .join("")
+    .join("");
 
   return `
     <!DOCTYPE html>
@@ -93,12 +99,12 @@ function generateEmailHTML(data: EmailRequest): string {
       <body>
         <div class="container">
           <div class="header">
-            <h1>IBOM Tech Week 2025</h1>
+            <h1>Akwa Ibom Tech Week 2025</h1>
             <p>Ticket Confirmation</p>
           </div>
           <div class="content">
             <p>Dear ${data.attendeeName},</p>
-            <p>Thank you for purchasing tickets to IBOM Tech Week 2025! Your payment has been confirmed.</p>
+            <p>Thank you for purchasing tickets to Akwa Ibom Tech Week 2025! Your payment has been confirmed.</p>
             
             <h3>Booking Details</h3>
             <p><strong>Transaction ID:</strong> ${data.transactionId}</p>
@@ -129,13 +135,13 @@ function generateEmailHTML(data: EmailRequest): string {
             
             <div class="footer">
               <p>If you have any questions, please contact us at support@ibomtechweek.com</p>
-              <p>&copy; 2025 IBOM Tech Week. All rights reserved.</p>
+              <p>&copy; 2025 Akwa Ibom Tech Week. All rights reserved.</p>
             </div>
           </div>
         </div>
       </body>
     </html>
-  `
+  `;
 }
 
 function formatTicketType(type: string): string {
@@ -143,6 +149,6 @@ function formatTicketType(type: string): string {
     "early-bird": "Early Bird",
     regular: "Regular",
     vip: "VIP",
-  }
-  return typeMap[type] || type
+  };
+  return typeMap[type] || type;
 }

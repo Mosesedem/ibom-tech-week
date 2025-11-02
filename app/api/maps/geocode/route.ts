@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     // Fallback coordinates for known locations
     const lowerAddress = address.toLowerCase();
     if (
-      lowerAddress.includes("ceedapeg") ||
+      lowerAddress.includes("CEEDAPEG") ||
       (lowerAddress.includes("chief") && lowerAddress.includes("odiong"))
     ) {
       return NextResponse.json({
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
           lat: 4.9465,
           lng: 8.6753,
         },
-        formattedAddress: "Ceedapeg Hotels, Chief Odiong Street, Uyo, Nigeria",
+        formattedAddress: "CEEDAPEG Hotels, Chief Odiong Street, Uyo, Nigeria",
       });
     }
 

@@ -9,15 +9,15 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "IBOM Tech Week 2025 - Event Registration",
+  title: "Akwa Ibom Tech Week 2025 - Event Registration",
   description:
-    "Register for IBOM Tech Week 2025. Join us for the biggest tech event in Akwa Ibom State.",
+    "Register for Akwa Ibom Tech Week 2025. Join us for the biggest tech event in Akwa Ibom State.",
   icons: {
     icon: "/images/icon-white.svg",
     apple: "/images/icon-white.svg",
   },
   keywords:
-    "IBOM Tech Week, tech event, Akwa Ibom, technology conference, innovation, networking",
+    "Akwa Ibom Tech Week, tech event, Akwa Ibom, technology conference, innovation, networking",
 };
 
 export default function RootLayout({

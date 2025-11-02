@@ -300,7 +300,7 @@ export function OrderSummary({
           </div>
           <div className="border-t pt-3">
             <p className="text-muted-foreground text-xs mb-1">Location</p>
-            <p className="font-semibold">Ceedapeg Hotels</p>
+            <p className="font-semibold">CEEDAPEG Hotels</p>
             <p className="text-xs text-muted-foreground">
               Chief Odiong Street, Uyo, Nigeria
             </p>
@@ -310,7 +310,7 @@ export function OrderSummary({
             className="w-full mt-3 border-primary text-primary hover:bg-accent"
             onClick={() =>
               window.open(
-                "https://maps.google.com/?q=Ceedapeg+Hotels+Uyo",
+                "https://maps.google.com/?q=CEEDAPEG+Hotels+Uyo",
                 "_blank"
               )
             }
@@ -324,8 +324,8 @@ export function OrderSummary({
       {/* Map */}
       <div className="hidden lg:block">
         <EventMap
-          eventName="IBOM Tech Week 2025"
-          eventAddress="Ceedapeg Hotels, Chief Odiong Street, Uyo, Nigeria"
+          eventName="Akwa Ibom Tech Week 2025"
+          eventAddress="CEEDAPEG Hotels, Chief Odiong Street, Uyo, Nigeria"
         />
       </div>
     </div>

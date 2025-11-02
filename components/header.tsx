@@ -7,7 +7,7 @@ export function Header() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-xl md:text-2xl lg:text-3xl font-bold">
-              IBOM Tech Week 2025
+              Akwa Ibom Tech Week 2025
             </h1>
             <p className="text-primary-foreground/90 text-xs md:text-sm mt-1">
               Register for Africa's Premier Tech Event
@@ -21,7 +21,7 @@ export function Header() {
             <div className="flex items-center gap-1 sm:justify-end">
               <MapPin className="h-3 w-3 md:h-4 md:w-4" />
               <span className="text-primary-foreground/90">
-                Ceedapeg Hotels, Uyo
+                CEEDAPEG Hotels, Uyo
               </span>
             </div>
           </div>

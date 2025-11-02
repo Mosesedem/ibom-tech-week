@@ -1,45 +1,51 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server";
 
 interface ReminderRequest {
-  attendeeEmail: string
-  attendeeName: string
-  eventDate: string
-  eventLocation: string
-  ticketCount: number
+  attendeeEmail: string;
+  attendeeName: string;
+  eventDate: string;
+  eventLocation: string;
+  ticketCount: number;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body: ReminderRequest = await request.json()
+    const body: ReminderRequest = await request.json();
 
     if (!body.attendeeEmail || !body.attendeeName) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
-    const emailResult = await sendReminderEmail(body)
+    const emailResult = await sendReminderEmail(body);
 
-    console.log("[v0] Reminder email sent to:", body.attendeeEmail)
+    console.log("[v0] Reminder email sent to:", body.attendeeEmail);
 
     return NextResponse.json({
       success: true,
       message: "Reminder email sent successfully",
       emailId: emailResult.id,
-    })
+    });
   } catch (error) {
-    console.error("[v0] Reminder email error:", error)
-    return NextResponse.json({ error: "Failed to send reminder email" }, { status: 500 })
+    console.error("[v0] Reminder email error:", error);
+    return NextResponse.json(
+      { error: "Failed to send reminder email" },
+      { status: 500 }
+    );
   }
 }
 
 async function sendReminderEmail(data: ReminderRequest) {
-  const emailContent = generateReminderHTML(data)
+  const emailContent = generateReminderHTML(data);
 
-  console.log("[v0] Reminder email content generated for:", data.attendeeEmail)
+  console.log("[v0] Reminder email content generated for:", data.attendeeEmail);
 
   return {
     id: `email_reminder_${Date.now()}`,
     status: "sent",
-  }
+  };
 }
 
 function generateReminderHTML(data: ReminderRequest): string {
@@ -62,12 +68,12 @@ function generateReminderHTML(data: ReminderRequest): string {
         <div class="container">
           <div class="header">
             <h1>Event Reminder</h1>
-            <p>IBOM Tech Week 2025 is Coming Soon!</p>
+            <p>Akwa Ibom Tech Week 2025 is Coming Soon!</p>
           </div>
           <div class="content">
             <p>Hi ${data.attendeeName},</p>
-            <p>This is a friendly reminder that IBOM Tech Week 2025 is happening soon!</p>
-            
+            <p>This is a friendly reminder that Akwa Ibom Tech Week 2025 is happening soon!</p>
+
             <div class="highlight">
               <strong>📅 Event Details:</strong><br>
               Date: ${data.eventDate}<br>
@@ -87,11 +93,11 @@ function generateReminderHTML(data: ReminderRequest): string {
             
             <div class="footer">
               <p>Questions? Contact us at support@ibomtechweek.com</p>
-              <p>&copy; 2025 IBOM Tech Week. All rights reserved.</p>
+              <p>&copy; 2025 Akwa Ibom Tech Week. All rights reserved.</p>
             </div>
           </div>
         </div>
       </body>
     </html>
-  `
+  `;
 }

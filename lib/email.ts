@@ -198,7 +198,7 @@ function generateTicketEmailHtml(params: EmailParams): string {
                   <strong style="color: #FF6B35;">⏰ Time:</strong> 10:00 AM 
                 </p>
                 <p style="margin: 8px 0; color: #333; font-size: 14px;">
-                  <strong style="color: #FF6B35;">📍 Venue:</strong> Ceedapeg hotels, Chief Odiong Street, Uyo, Nigeria
+                  <strong style="color: #FF6B35;">📍 Venue:</strong> CEEDAPEG hotels, Chief Odiong Street, Uyo, Nigeria
                 </p>
               </div>
             </td>

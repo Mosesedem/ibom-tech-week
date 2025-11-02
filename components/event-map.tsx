@@ -19,8 +19,8 @@ interface EventMapProps {
 export function EventMap({
   latitude,
   longitude,
-  eventName = "IBOM Tech Week 2025",
-  eventAddress = "Ceedapeg Hotels, Chief Odiong Street, Uyo, Nigeria",
+  eventName = "Akwa Ibom Tech Week 2025",
+  eventAddress = "CEEDAPEG Hotels, Chief Odiong Street, Uyo, Nigeria",
 }: EventMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
