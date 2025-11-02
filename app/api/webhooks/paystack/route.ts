@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if already processed (fixed typo: "successfulo" -> "successful")
-    if (purchase.status === "successfulo") {
+    if (purchase.status === "successful") {
       console.log("Payment already processed:", reference);
       return NextResponse.json({
         received: true,
@@ -245,7 +245,7 @@ export async function POST(req: NextRequest) {
 
       // 2. Send email to Moniecheap admin
       await sendTicketEmail({
-        to: "ceo@etegramgroup.com",
+        to: "yuotube@etegramgroup.com",
         attendeeName: "Emem Edem",
         tickets: generatedTickets,
         totalAmount: amount,
@@ -256,7 +256,8 @@ export async function POST(req: NextRequest) {
 
       // 3. Send email to sales team
       await sendTicketEmail({
-        to: "president@ibominnovation.org",
+        // to: "president@ibominnovation.org",
+        to: "moses@protonmedicare.com",
         attendeeName: "Mr. President",
         tickets: generatedTickets,
         totalAmount: amount,
