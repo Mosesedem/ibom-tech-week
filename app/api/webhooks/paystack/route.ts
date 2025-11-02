@@ -17,7 +17,7 @@ function verifyPaystackSignature(body: string, signature: string): boolean {
 
 // Generate unique ticket ID
 function generateTicketId(): string {
-  const prefix = "AITW";
+  const prefix = "AKTW-2025";
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 8).toUpperCase();
   return `${prefix}-${timestamp}-${random}`;
